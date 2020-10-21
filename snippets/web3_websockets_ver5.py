@@ -101,7 +101,7 @@ def receiver():
 if __name__=="__main__":
     ABIS = {}
     STORAGE = {}
-    env_vals = dotenv_values()  # INFURA_TOKEN & PRIVATE_KEY & ADDRESS
+    env_vals = dotenv_values("../.env")  # INFURA_TOKEN & PRIVATE_KEY & ADDRESS
     
     HALFREKT_ABI_PATH = "../abis/0x404A03728Afd06fB934e4b6f0EaF67796912733A.json"
     UNISWAPV2_ABI_PATH = "../abis/uniswapv2.json"
@@ -113,6 +113,6 @@ if __name__=="__main__":
     data_request = {"jsonrpc":"2.0", "id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
     # receiver()
     current_block_number = w3.eth.blockNumber
-    process(current_block_number)
-    # amount_out = uniswap("0xddbE1dFC668233bb882014838DAE50deF5Ea967c", 4000, inverse=1)
-    # print(amount_out)
+    # process(current_block_number)
+    amount_out = uniswap("0xddbE1dFC668233bb882014838DAE50deF5Ea967c", 4000, inverse=1)
+    print(amount_out)

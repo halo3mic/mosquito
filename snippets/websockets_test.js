@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const Web3 = require('web3');
 
-const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://eth-mainnet.ws.alchemyapi.io/v2/c37KaTgYBJrbuXXMxLF8yvRaaSDz1HWc'));
+const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://eth-mainnet.ws.alchemyapi.io/v2/INFURATOKEN'));
 
 const subscription = web3.eth.subscribe('newBlockHeaders', (error, blockHeader) => {
 		if (error) return console.error(error);
