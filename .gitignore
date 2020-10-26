@@ -1,3 +1,5 @@
 .env
 .git
 env1
+**__pycache__
+src/snippets
