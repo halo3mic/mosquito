@@ -1,13 +1,77 @@
-from config import *
-from helpers import Uniswap, approve_erc20
+from src.config import *
+from src.helpers import Uniswap, approve_erc20
 
+
+class EmptySet:
+
+    EPOCH_START = 1602201600
+    EPOCH_PERIOD = 28800
+    EPOCH_OFFSET = 106
+
+    def __init__(self, web3, wallet_address):
+        self.wallet_address = wallet_address
+        self.gas_limit_advance = 400000
+        self.gas_limit_trade = 400000
+        self.payloads = []
+
+        self.emptyset_proxy = ADDRESSES["emptyset"]["proxy"]
+        self.emptyset_implementation = ADDRESSES["emptyset"]["implementation"]
+        self.emptyset_contract = web3.eth.contract(address=self.emptyset_proxy, abi=ABIS[self.emptyset_implementation])
+        self.uniswap = Uniswap(web3)
+
+    def __str__(self):
+        return "EmptySet"
+
+    def __call__(self, block_number, block_timestamp):
+        if self.is_epoch(block_timestamp):
+            payloads = self.get_payloads()
+            return payloads
+
+    def _get_target_timestamp(self):
+        tm = (epoch_time+1-EmptySet.EPOCH_OFFSET)
+        tm *= EmptySet.EPOCH_PERIOD
+        tm += EmptySet.EPOCH_START
+        return tm
+
+    def get_payloads(self):
+        emptyset_calldata = self.emptyset_contract.encodeABI(fn_name="advance", args=[])
+        emptyset_payload = {"contractAddress": self.emptyset_proxy, 
+                            "calldata": emptyset_calldata, 
+                            "gasLimit": self.gas_limit_advance
+                            }
+        path = [ADDRESSES["tokens"]["esd"], ADDRESSES["tokens"]["usdc"], ADDRESSES["tokens"]["weth9"]]
+        trade_payload = self.uniswap.get_payload(100*10**18, 
+                                                 0, # Specify better price otherwise this could fail
+                                                 path, 
+                                                 self.gas_limit_trade, 
+                                                 to_address=self.wallet_address, tkn_slippage=0.5)
+
+        return self.payloads + [emptyset_payload, trade_payload]
+
+    def _get_epochTime(self):
+        et = self.emptyset_contract.functions.epochTime().call()
+        STORAGE["epoch_time"] = et
+        return et
+
+    def _get_epoch(self):
+        et = self.emptyset_contract.functions.epoch().call()
+        STORAGE["epoch"] = et
+        return et
+
+    def is_epoch(self, blockTimestamp):
+        epochTime_calc = (blockTimestamp-EmptySet.EPOCH_START)
+        epochTime_calc /= EmptySet.EPOCH_PERIOD
+        epochTime_calc += EmptySet.EPOCH_OFFSET
+        epoch = STORAGE.get("epoch", self._get_epoch())
+        # what is the threshold -- when to fire it?
+        return epoch < epochTime_calc
 
 class HalfRekt:
 
-    def __init__(self, block_number, web3, wallet_address):
+    def __init__(self, web3, wallet_address):
         self.web3 = web3
         self.wallet_address = wallet_address
-        self.block_number = block_number
+        self.block_number = web3.eth.blockNumber
         self.gas_limit_rekt = 150000
         self.gas_limit_trade = 200000
         self.payout_nme = None

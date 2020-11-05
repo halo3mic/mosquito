@@ -2,10 +2,16 @@ import subprocess
 import re
 import atexit
 
-from config import NODE_INFO
+from src.config import NODE_INFO
 
 
-def start_ganache(provider, block_number=None, port=8545, mine_interval=None, log=False):
+# r = requests.post(provider_path, json.dumps({"jsonrpc": "2.0","method": "evm_increaseTime", "params": [100]}))
+# r = requests.post(provider_path, json.dumps({"jsonrpc": "2.0","method": "evm_mine", "params": []}))
+# requests.post("http://127.0.0.1:8545", json.dumps({"jsonrpc": "2.0","method": "miner_stop", "params": []}))  # Stop Mining
+# requests.post("http://127.0.0.1:8545", json.dumps({"jsonrpc": "2.0","method": "miner_start", "params": [2]}))  # Continue mining
+
+
+def start_ganache(provider, block_number=None, port=8545, mine_interval=None, log=False, unlock=[]):
     private_keys = []
     accounts = []
 
@@ -13,10 +19,20 @@ def start_ganache(provider, block_number=None, port=8545, mine_interval=None, lo
     # Note that only unsecure ssl connection is supported by ganache - so wss does not work
     provider_prefix = "http://" if provider.startswith("http") else "ws://"
     provider += "@" + str(block_number) if block_number else ""
-    unlock = "0x2493336E00A8aDFc0eEDD18961A49F2ACAf8793f"
+    unlock_args = []
+    for w_address in unlock:
+        unlock_args.append("--unlock")
+        unlock_args.append(w_address)
+    process_args = ["ganache-cli", 
+                    *mine_interval, 
+                    *unlock_args, 
+                    "--callGasLimit", "0x493E0", 
+                    "-f", provider, 
+                    f"-p {port}", 
+                    "-v"]
     try:
         print("Starting ganache ...")
-        process = subprocess.Popen(["ganache-cli", mine_interval, "--unlock", unlock, "--callGasLimit",  "0x493E0", "-f", provider, f"-p {port}", "-v"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(process_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         while 1:
             output = process.stdout.readline().decode("utf-8").strip()
