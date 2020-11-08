@@ -5,22 +5,24 @@ from pprint import pprint
 
 from src.config import *
 from src.dev_main import execute
-from src.ganache import start_ganache
+from src.ganache import Ganache
 from src.opportunities import HalfRekt
 from src.helpers import Uniswap, approve_erc20, transfer_erc20
 
 
+wallet_address = "0x2493336E00A8aDFc0eEDD18961A49F2ACAf8793f"
 # START HISTORICAL NODE
 start_block_number = 10996939
 node_path = NODE_INFO["alchemy"]["html_path"]
-
-ganache_process, provider_path, accounts, private_keys = start_ganache(node_path, block_number=start_block_number, mine_interval=3)
-wallet_address = accounts[0]
+ganache_process = Ganache(node_path, block_number=start_block_number, unlock=[wallet_address], mine_interval=5)
+ganache_process.start_node()
+provider_path = ganache_process.node_path
+# ganache_process, provider_path, accounts, private_keys = start_ganache(node_path, block_number=start_block_number, mine_interval=3)
+# wallet_address = accounts[0]
 atexit.register(lambda: ganache_process.kill())  # Closes the node after python finishes
 w3 = Web3(Web3.HTTPProvider(provider_path))
 
 
-wallet_address = "0x2493336E00A8aDFc0eEDD18961A49F2ACAf8793f"
 
 
 start_block_number = w3.eth.blockNumber
@@ -52,10 +54,10 @@ tx_reciept_exploit = w3.eth.waitForTransactionReceipt(tx_hash_exploit)
 balance_nme = halfrekt_contract.functions.balanceOf(wallet_address).call()
 print("nme balance: ", balance_nme/10**18)
 
-tx_hash_trade = execute(w3, response["payloads"][2], wallet_address)
-pprint(response["payloads"][2])
+# tx_hash_trade = execute(w3, response["payloads"][2], wallet_address)
+# pprint(response["payloads"][2])
 
-tx_reciept_trade = w3.eth.waitForTransactionReceipt(tx_hash_trade)
+# tx_reciept_trade = w3.eth.waitForTransactionReceipt(tx_hash_trade)
 balance_eth_end = w3.eth.getBalance(wallet_address)
 print("eth end balance: ", balance_eth_end)
 balance_nme = halfrekt_contract.functions.balanceOf(wallet_address).call()
@@ -63,7 +65,7 @@ print("nme balance: ", balance_nme/10**18)
 
 pprint(tx_reciept_approve.blockNumber)
 pprint(tx_reciept_exploit.blockNumber)
-pprint(tx_reciept_trade.blockNumber)
+# pprint(tx_reciept_trade.blockNumber)
 
 
 # ws_receiver(node_path, data_request, pprint)

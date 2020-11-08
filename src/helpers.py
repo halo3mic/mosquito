@@ -1,5 +1,4 @@
 from src.config import *
-from src.ganache import start_ganache
 import time
 import atexit
 
@@ -59,12 +58,3 @@ def balance_erc20(w3, holder_address, token_address):
     balance = tkn_contract.functions.balanceOf(holder_address).call()
     return balance / 10**decimals
 
-
-# Move to ganache.py!
-def start_historical_node(provider, target_block, whitelisted=None):
-    start_block_number = target_block-2
-    ganache_process, provider_path, accounts, private_keys = start_ganache(provider, block_number=start_block_number, unlock=whitelisted)
-    atexit.register(lambda: ganache_process.kill())  # Closes the node after python finishes
-    w3 = Web3(Web3.HTTPProvider(provider_path))
-
-    return w3
