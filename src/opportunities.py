@@ -27,7 +27,7 @@ class EmptySet:
             payloads = self.get_payloads()
             return payloads
 
-    def _get_target_timestamp(self):
+    def _get_target_timestamp(self, epoch_time):
         tm = (epoch_time+1-EmptySet.EPOCH_OFFSET)
         tm *= EmptySet.EPOCH_PERIOD
         tm += EmptySet.EPOCH_START
@@ -62,9 +62,16 @@ class EmptySet:
         epochTime_calc = (blockTimestamp-EmptySet.EPOCH_START)
         epochTime_calc /= EmptySet.EPOCH_PERIOD
         epochTime_calc += EmptySet.EPOCH_OFFSET
+        epochTime_call = STORAGE.get("epochTime", self._get_epochTime())
+        epochTime = int(epochTime_calc)
         epoch = STORAGE.get("epoch", self._get_epoch())
+        print("epoch: ", epoch)
+        print("calcEpochTime: ", epochTime_calc)
+        print("epochTime: ", epochTime)
+        print("epochTime_call:", epochTime_call)
+        print("target_timestamp: ", self._get_target_timestamp(epochTime))
         # what is the threshold -- when to fire it?
-        return epoch < epochTime_calc
+        return epoch < epochTime
 
 class HalfRekt:
 

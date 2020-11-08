@@ -4,7 +4,7 @@ import asyncio
 import time
 import json
 
-from src.opportunities import HalfRekt
+from src.opportunities import HalfRekt, EmptySet
 from src.config import *
 
 
@@ -16,11 +16,11 @@ def process(msg_org):
     check_plans(block_number)
 
 
-def check_plans(block_number):
-    plans = [HalfRekt]
+def check_plans(w3, block_number):
+    plans = [HalfRekt, EmptySet]
     for plan in plans:
         print(f"Running: {repr(plan)}")
-        hf = HalfRekt(block_number, w3, wallet_address)
+        hf = HalfRekt(w3, wallet_address)
         response = hf()
         # if payload: send_to_archer(payload)
         print(f"Finished with {plan}")

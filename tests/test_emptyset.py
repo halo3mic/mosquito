@@ -9,8 +9,7 @@ from src.opportunities import HalfRekt, EmptySet
 from src.helpers import *
 
 
-target_block = 11195961
-# target_block = 11199245
+target_block = 11213399
 wallet_address = "0x2493336E00A8aDFc0eEDD18961A49F2ACAf8793f"
 provider_path = NODE_INFO["alchemy"]["html_path"]
 whitelisted=[wallet_address]
@@ -35,26 +34,26 @@ print("Timstamp: ", block_timestamp)
 payload_approval = approve_erc20(ADDRESSES["tokens"]["esd"], ADDRESSES["uniswap"]["uniswapv2_router02"])
 t0 = time.time()
 es = EmptySet(w3, wallet_address)
-if es is None: raise Exception("No opportunity!")
 payload = es(block_number, block_timestamp)
+print(payload)
 print(f"Payloads ready, time taken: {time.time()-t0} sec")
 
-try:
-    approval_hash = execute(w3, payload_approval, wallet_address)
-    advance_hash = execute(w3, payload[0], wallet_address)
+# try:
+#     approval_hash = execute(w3, payload_approval, wallet_address)
+#     advance_hash = execute(w3, payload[0], wallet_address)
 
-    approval_tx = w3.eth.waitForTransactionReceipt(approval_hash)
-    advance_tx = w3.eth.waitForTransactionReceipt(advance_hash)
-    trade_hash = execute(w3, payload[1], wallet_address)
-    trade_tx = w3.eth.waitForTransactionReceipt(trade_hash)
-except Exception as e:
-    print(repr(e))
-else:
-    print("ESD Balance at end: ", balance_erc20(w3, wallet_address, ADDRESSES["tokens"]["esd"]))
-    print("ETH Balance at end: ", w3.eth.getBalance(wallet_address)/10**18)
-    print("Block number: ", w3.eth.getBlock("latest").number)
-    print("Timestamp: ", w3.eth.getBlock("latest").timestamp)
-    print(approval_tx.blockNumber)
-    print(trade_tx.blockNumber)
-    print(advance_tx.blockNumber)
+#     approval_tx = w3.eth.waitForTransactionReceipt(approval_hash)
+#     advance_tx = w3.eth.waitForTransactionReceipt(advance_hash)
+#     trade_hash = execute(w3, payload[1], wallet_address)
+#     trade_tx = w3.eth.waitForTransactionReceipt(trade_hash)
+# except Exception as e:
+#     print(repr(e))
+# else:
+#     print("ESD Balance at end: ", balance_erc20(w3, wallet_address, ADDRESSES["tokens"]["esd"]))
+#     print("ETH Balance at end: ", w3.eth.getBalance(wallet_address)/10**18)
+#     print("Block number: ", w3.eth.getBlock("latest").number)
+#     print("Timestamp: ", w3.eth.getBlock("latest").timestamp)
+#     print(approval_tx.blockNumber)
+#     print(trade_tx.blockNumber)
+#     print(advance_tx.blockNumber)
 
