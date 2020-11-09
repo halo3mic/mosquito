@@ -38,6 +38,9 @@ data_request = NODE_INFO[provider_name]["ws_blocks_request"]
 w3 = Web3(Web3.HTTPProvider(html_provider))
 es = EmptySet(w3, wallet_address)
 # ws_receiver(ws_provider, data_request, process_input_w_log)
-curr_block = w3.eth.getBlock(11213402)
+STORAGE["epoch"] = 195
+curr_block = w3.eth.getBlock(11213398)
 opp_detected = check_plans(curr_block.number, curr_block.timestamp)
 print(opp_detected)
+
+

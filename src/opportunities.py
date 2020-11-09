@@ -1,12 +1,16 @@
 from src.config import *
 from src.helpers import Uniswap, approve_erc20
 
+import time
+
 
 class EmptySet:
 
     EPOCH_START = 1602201600
     EPOCH_PERIOD = 28800
     EPOCH_OFFSET = 106
+    tm_threshold = 15  # Threshold in seconds for when to trigger the opportunity
+    esd_reward = 100*10**18
 
     def __init__(self, web3, wallet_address):
         self.wallet_address = wallet_address
@@ -27,8 +31,11 @@ class EmptySet:
             payloads = self.get_payloads()
             return payloads
 
-    def _get_target_timestamp(self, epoch_time):
-        tm = (epoch_time+1-EmptySet.EPOCH_OFFSET)
+    def _get_target_timestamp(self):
+        epoch = STORAGE.get("epoch")
+        if not epoch:
+            epoch = self._get_epoch()
+        tm = (epoch+1-EmptySet.EPOCH_OFFSET)
         tm *= EmptySet.EPOCH_PERIOD
         tm += EmptySet.EPOCH_START
         return tm
@@ -40,38 +47,48 @@ class EmptySet:
                             "gasLimit": self.gas_limit_advance
                             }
         path = [ADDRESSES["tokens"]["esd"], ADDRESSES["tokens"]["usdc"], ADDRESSES["tokens"]["weth9"]]
-        trade_payload = self.uniswap.get_payload(100*10**18, 
-                                                 0, # Specify better price otherwise this could fail
+        trade_payload = self.uniswap.get_payload(EmptySet.esd_reward, 
+                                                 0,
                                                  path, 
-                                                 self.gas_limit_trade, 
-                                                 to_address=self.wallet_address, tkn_slippage=0.5)
+                                                 self.gas_limit_trade,
+                                                 to_address=self.wallet_address)
 
         return self.payloads + [emptyset_payload, trade_payload]
 
-    def _get_epochTime(self):
+    def _call_epochTime(self):
         et = self.emptyset_contract.functions.epochTime().call()
         STORAGE["epoch_time"] = et
+        return et
+
+    def _calc_epochTime(self, block_timestamp):
+        et = (block_timestamp-EmptySet.EPOCH_START)
+        et /= EmptySet.EPOCH_PERIOD
+        et += EmptySet.EPOCH_OFFSET
+        et = int(et)
         return et
 
     def _get_epoch(self):
         et = self.emptyset_contract.functions.epoch().call()
         STORAGE["epoch"] = et
+        print("Epoch: ", et)
         return et
 
-    def is_epoch(self, blockTimestamp):
-        epochTime_calc = (blockTimestamp-EmptySet.EPOCH_START)
-        epochTime_calc /= EmptySet.EPOCH_PERIOD
-        epochTime_calc += EmptySet.EPOCH_OFFSET
-        epochTime_call = STORAGE.get("epochTime", self._get_epochTime())
-        epochTime = int(epochTime_calc)
-        epoch = STORAGE.get("epoch", self._get_epoch())
-        print("epoch: ", epoch)
-        print("calcEpochTime: ", epochTime_calc)
-        print("epochTime: ", epochTime)
-        print("epochTime_call:", epochTime_call)
-        print("target_timestamp: ", self._get_target_timestamp(epochTime))
-        # what is the threshold -- when to fire it?
-        return epoch < epochTime
+    def is_epoch(self, block_timestamp):
+        target_timestamp = STORAGE.get("nextEpochTimestamp")
+        if not target_timestamp:
+            target_timestamp = self._get_target_timestamp()
+
+        tim_diff = target_timestamp - block_timestamp        
+        
+        opp_detected = tim_diff < EmptySet.tm_threshold 
+        if opp_detected:
+            STORAGE["nextEpochTimestamp"] = None
+
+        print("target_timestamp: ", target_timestamp)
+        print("Seconds left by last block timestamp: ", target_timestamp-block_timestamp)
+        print("tim_diff:", tim_diff)
+
+        return opp_detected
 
 class HalfRekt:
 
