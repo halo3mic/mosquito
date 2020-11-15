@@ -18,6 +18,8 @@ class Ganache:
             self.unlock_args.append("--unlock")
             self.unlock_args.append(w_address)
         self.process = None
+        self.accounts = []
+        self.private_keys = []
 
     def start_node(self):
         process_args = ["ganache-cli", 
@@ -30,8 +32,10 @@ class Ganache:
         print("Starting ganache ...")
         try:
             process = subprocess.Popen(process_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
             while 1:
                 output = process.stdout.readline().decode("utf-8").strip()
+
                 if output.startswith("Error"):
                     error = output
                     error_msg = error
@@ -41,6 +45,15 @@ class Ganache:
                         if error.endswith("\n"):
                             break
                     raise Exception(error_msg)
+                if output.endswith('"evm_mine"'):
+                    print("#"*80)
+                    print("  NEW BLOCK MINED  ".center(80, "#"))
+                    print("#"*80)
+                if output.startswith("("):
+                    if len(self.accounts) < 10:
+                        self.accounts.append(output.split(" ")[1])
+                    else:
+                        self.private_keys.append(output.split(" ")[1])
                 if output.startswith("Listening on "):
                     self.process = process
                     break
