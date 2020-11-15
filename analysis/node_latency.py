@@ -46,18 +46,6 @@ def process_input_w_log(msg_org, queue):
     print("BLOCKS PROCESSED: ", blocks_processed)
 
 
-# def process(msg_org, queue):
-#     msg = json.loads(msg_org)["params"]["result"]
-#     block_number = int(msg["number"].lstrip("0x"), 16)
-#     timestamp = int(msg["timestamp"].lstrip("0x"), 16) 
-#     print(f"Latency: {time.time()-timestamp} | Block: {block_number}")
-#     STORAGE = queue.get()
-#     print(STORAGE)
-#     # check_plans(block_number)
-#     STORAGE[block_number] = timestamp
-#     queue.put(STORAGE)
-
-
 def check_plans(opp, block_number, block_timestamp):
     payload = opp(block_number, block_timestamp)
     return bool(payload)
@@ -93,11 +81,6 @@ def main(provider_name):
             ws_receiver(ws_provider, data_request, process_input_w_log)
         except Exception as e:
             raise e
-            # with open(error_log_path, "a") as error_log:
-            #     if last_error == e:
-            #         raise e
-            #     error_log.write(repr(e))
-            #     last_error = e
 
 
 

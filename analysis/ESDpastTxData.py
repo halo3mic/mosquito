@@ -18,6 +18,7 @@ payload = {"module": "account",
 response = requests.get('https://api.etherscan.io/api', payload).json()
 txs = response["result"]
 df = pd.DataFrame(txs)
-df_trun = df[["blockNumber", "timeStamp", "contractAddress", "from", "gasUsed", "gasPrice", "value"]]
+df_trun = df[(df.tokenSymbol=="ESD")]
+df_trun = df_trun[["blockNumber", "timeStamp", "contractAddress", "from", "gasUsed", "gasPrice", "value"]]
 df_trun.to_csv("./logs/ESDpastTxData.csv")
 pprint(df_trun)

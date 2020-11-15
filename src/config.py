@@ -2,10 +2,12 @@ import json
 from dotenv import dotenv_values
 from web3 import Web3
 
+
 _env_vals = dotenv_values("./.env")
 
 BOT_ID = "MSQT1"
 SUPPLIER_ADDRESS = "0xCFb13c3248887Ab43d1777b63E57a84e8250A033"
+RESULT_LOG_PATH = "./logs/stats.csv"
 
 # ADDRESSES
 ADDRESSES = {"halfrekt": 
@@ -70,7 +72,7 @@ NODE_INFO = {"infura": {
              }
             }
 
-# OPEN_OPPS = [EmptySet]
+
 # WALLETS
 # WALLETS = {"Test account": (_env_vals['ADDRESS'], _env_vals['PRIVATE_KEY'])}
 

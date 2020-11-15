@@ -15,8 +15,6 @@ class Uniswap:
         pool_contract = self.web3.eth.contract(address=pool_address, abi=ABIS["uniswapv2"])
         bal0, bal1, _ = pool_contract.functions.getReserves().call()
         if inverse: bal0, bal1 = bal1, bal0
-        # bal0 /= 10**decimals[0]
-        # bal1 /= 10**decimals[1]
         amount_out = (1 - bal1/(bal1+input_amount)) * bal0 * (1-self.fee)
         
         return amount_out
@@ -127,4 +125,18 @@ def bytes2payload(byteload):
         x += calldata_ln_int
 
     return chunks_args + [tx_ln_raw] + chunks_txs
+
+
+def execute_payload(w3, payload, wallet_address):
+    gas_price = w3.eth.gasPrice
+    nonce = w3.eth.getTransactionCount(wallet_address)
+    tx = {
+          "gasLimit": payload["gasLimit"],
+          "from": wallet_address,
+          "to": payload["contractAddress"],
+          "data": payload["calldata"]}
+
+    tx_hash = w3.eth.sendTransaction(tx).hex()
+    
+    return tx_hash  
 

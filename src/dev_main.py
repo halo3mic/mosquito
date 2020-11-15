@@ -3,51 +3,59 @@ import websockets
 import asyncio
 import time
 import json
+import os
+import csv
 
-from src.opportunities import HalfRekt, EmptySet
 from src.config import *
+from src.opportunities import EmptySet
 
 
-def process(msg_org, queue, opps):
+def process_w_log(msg_org, queue):
+    receiving_time = time.time()
     msg = json.loads(msg_org)["params"]["result"]
     block_number = int(msg["number"].lstrip("0x"), 16)
     timestamp = int(msg["timestamp"].lstrip("0x"), 16) 
-    print(f"Latency: {time.time()-timestamp} | Block: {block_number}")
-    STORAGE = queue.get()
-    print(STORAGE)
-    # check_plans(block_number)
-    STORAGE["newthing"] = "this is a new entry"
-    queue.put(STORAGE)
-
-
-def check_plans(w3, block_number):
-    # Go through opps
-    pass
-    # plans = [HalfRekt, EmptySet]
-    # for plan in plans:
-    #     print(f"Running: {repr(plan)}")
-    #     hf = HalfRekt(w3, wallet_address)
-    #     response = hf()
-    #     # if payload: send_to_archer(payload)
-    #     print(f"Finished with {plan}")
-
-    #     return response
-    # else:
-    #     print("No opportunities!")
-
-
-def execute(w3, payload, wallet_address):
-    gas_price = w3.eth.gasPrice
-    nonce = w3.eth.getTransactionCount(wallet_address)
-    tx = {
-          "gasLimit": payload["gasLimit"],
-          "from": wallet_address,
-          "to": payload["contractAddress"],
-          "data": payload["calldata"]}
-
-    tx_hash = w3.eth.sendTransaction(tx).hex()
     
-    return tx_hash  
+    os.system("clear")
+    print(f"  BLOCK NUMBER: {block_number}  ".center(80, "#"))
+
+    for opp in opps:
+        t0 = time.time()
+        opp_response = check_plans(opp, block_number, timestamp)
+        t1 = time.time()
+        processing_time_opp = t1 - t0
+        processing_time_all = t1 - receiving_time
+
+        stats = {"blockNumber": block_number, 
+                   "blockTimestamp": timestamp, 
+                   "receivingTime": int(receiving_time), 
+                   "oppProcessingTime": processing_time_opp, 
+                   "wholeProcessingTime": processing_time_all,
+                   "opportunityFound": bool(opp_response), 
+                   "providerName": provider, 
+                   "opportunity": str(opp), 
+                   "byteload": opp_response
+                   }
+        log_stats(stats)
+
+
+
+        print(f"OPP {opp}: {bool(opp_response)}")
+        print(f"Time taken: {processing_time_all:.2f} sec")
+        print(f"Latency: {receiving_time-timestamp:.2f} sec")
+    print("_"*80)
+
+
+def check_plans(opp, block_number, block_timestamp):
+    byteload = opp(block_number, block_timestamp)
+    return byteload
+
+
+def log_stats(row_content):
+    with open(RESULT_LOG_PATH, "a") as stats_file:
+        writer = csv.DictWriter(stats_file, fieldnames=row_content.keys())
+        writer.writeheader()
+        writer.writerow(row_content)
 
 
 def ws_receiver(uri, data_request, process_fun):
@@ -75,12 +83,25 @@ def ws_receiver(uri, data_request, process_fun):
     return asyncio.get_event_loop().run_until_complete(_start_listening())
 
 
-if __name__=="__main__":
-    provider_name = "infura"
+def main(provider_name, avl_opps):
+    global opps, provider
+    # Settings
     html_provider = NODE_INFO[provider_name]["html_path"]
     ws_provider = NODE_INFO[provider_name]["ws_path"]
     data_request = NODE_INFO[provider_name]["ws_blocks_request"]
+    w3 = Web3(Web3.HTTPProvider(html_provider))
 
-    ws_receiver(ws_provider, data_request, process)
+    # Globals vars
+    opps = [plan(w3) for plan in avl_opps]
+    provider = provider_name
+
+    ws_receiver(ws_provider, data_request, process_w_log)
+
+
+if __name__=="__main__":
+    provider_name = "infura"
+    avl_opps = [EmptySet]
+    main(provider_name, avl_opps)
+
 
     

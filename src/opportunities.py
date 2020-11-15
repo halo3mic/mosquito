@@ -11,8 +11,11 @@ class EmptySet:
     EPOCH_OFFSET = 106
     tm_threshold = 15  # Threshold in seconds for when to trigger the opportunity
     esd_reward = 100
-    advance_gas_used = 230000
-    trade_gas_used = 150000
+    advance_gas_used = 300000
+    trade_gas_used = 200000
+    gas_limit_advance = 400000
+    gas_limit_trade = 400000
+    wallet_address = "x"*18
 
     @classmethod
     def calc_epochTime(cls, block_timestamp):
@@ -22,17 +25,14 @@ class EmptySet:
         et = int(et)
         return et
 
-    def __init__(self, web3, wallet_address):
-        self.wallet_address = wallet_address
-        self.gas_limit_advance = 400000
-        self.gas_limit_trade = 400000
-
+    def __init__(self, web3):
         self.emptyset_proxy = ADDRESSES["emptyset"]["proxy"]
         self.emptyset_implementation = ADDRESSES["emptyset"]["implementation"]
         self.emptyset_contract = web3.eth.contract(address=self.emptyset_proxy, abi=ABIS[self.emptyset_implementation])
         self.uniswap = Uniswap(web3)
-
-        self.STORAGE = {}
+        self.opp_detected = False
+        self.nextEpochTimestamp = None
+        self.epoch = None
 
     def __str__(self):
         return "EmptySet"
@@ -41,18 +41,9 @@ class EmptySet:
         if self.is_epoch(block_timestamp):
             payload = self.get_payload(block_number)
             byteload = payload2bytes(payload)
-            
+
             return byteload
 
-    def _get_target_timestamp(self):
-        epoch = self.STORAGE.get("epoch")
-        if not epoch:
-            epoch = self._get_epoch()
-        tm = (epoch+1-EmptySet.EPOCH_OFFSET)
-        tm *= EmptySet.EPOCH_PERIOD
-        tm += EmptySet.EPOCH_START
-        self.STORAGE["nextEpochTimestamp"] = tm
-        return tm
 
     def get_payload(self, block_number):
         emptyset_calldata = self.emptyset_contract.encodeABI(fn_name="advance", args=[])
@@ -60,7 +51,6 @@ class EmptySet:
                             "calldata": emptyset_calldata, 
                             "gasLimit": self.gas_limit_advance
                             }
-
         path = [ADDRESSES["tokens"]["esd"], ADDRESSES["tokens"]["usdc"], ADDRESSES["tokens"]["weth9"]]
         uni_pools = ADDRESSES["uniswap"]
         esd_reward = EmptySet.esd_reward * 10**TKN_DECIMALS["esd"]
@@ -71,7 +61,6 @@ class EmptySet:
                                              path, 
                                              self.gas_limit_trade,
                                              to_address=self.wallet_address)
-
         payload = {
                     "blockNumber": block_number, 
                     "gasEstimate": EmptySet.advance_gas_used + EmptySet.trade_gas_used, 
@@ -82,39 +71,29 @@ class EmptySet:
                     "profitCurrency": "ETH"
                   }
 
-
         return payload
 
-
-    def _call_epochTime(self):
-        print("Calling <epochTime()>")
-        et = self.emptyset_contract.functions.epochTime().call()
-        self.STORAGE["epoch_time"] = et
-        return et
+    def _get_target_timestamp(self):
+        epoch = self._get_epoch()
+        tm = (epoch+1-EmptySet.EPOCH_OFFSET)
+        tm *= EmptySet.EPOCH_PERIOD
+        tm += EmptySet.EPOCH_START
+        self.nextEpochTimestamp = tm
+        return tm
 
     def _get_epoch(self):
-        print("Calling <epoch()>")
         et = self.emptyset_contract.functions.epoch().call()
-        self.STORAGE["epoch"] = et
-        # print("Epoch: ", et)
+        self.epoch = et
         return et
 
     def is_epoch(self, block_timestamp):
-        target_timestamp = self.STORAGE.get("nextEpochTimestamp")
-        if not target_timestamp:
-            target_timestamp = self._get_target_timestamp()
+        target_timestamp = self.nextEpochTimestamp
+        if not target_timestamp or self.opp_detected or (target_timestamp - block_timestamp < 0):
+            target_timestamp = self.nextEpochTimestamp = self._get_target_timestamp()              
+        self.opp_detected = (target_timestamp - block_timestamp) < EmptySet.tm_threshold 
 
-        tim_diff = target_timestamp - block_timestamp        
-        
-        opp_detected = tim_diff < EmptySet.tm_threshold 
-        if opp_detected:
-            self.STORAGE["nextEpochTimestamp"] = None
+        return self.opp_detected
 
-        # print("target_timestamp: ", target_timestamp)
-        # print("Seconds left by last block timestamp: ", target_timestamp-block_timestamp)
-        # print("tim_diff:", tim_diff)
-
-        return opp_detected
 
 class HalfRekt:
 
