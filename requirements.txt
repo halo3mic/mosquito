@@ -1,2 +1,3 @@
 web3==5.12.3
 rusty-rlp==0.1.15
+python-dotenv==0.15.0
