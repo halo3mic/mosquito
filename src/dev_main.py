@@ -15,14 +15,17 @@ def process_w_log(msg_org, queue):
     msg = json.loads(msg_org)["params"]["result"]
     block_number = int(msg["number"].lstrip("0x"), 16)
     timestamp = int(msg["timestamp"].lstrip("0x"), 16) 
+    storage = queue.get()   
     
     os.system("clear")
     print(f"  BLOCK NUMBER: {block_number}  ".center(80, "#"))
 
     for opp in opps:
+        opp.import_state(storage.get(str(opp), {}))
         t0 = time.time()
         opp_response = check_plans(opp, block_number, timestamp)
         t1 = time.time()
+        storage[str(opp)] = opp.export_state()
         processing_time_opp = t1 - t0
         processing_time_all = t1 - receiving_time
 
@@ -41,8 +44,9 @@ def process_w_log(msg_org, queue):
 
 
         print(f"OPP {opp}: {bool(opp_response)}")
-        print(f"Time taken: {processing_time_all:.2f} sec")
+        print(f"Time taken: {processing_time_all:.4f} sec")
         print(f"Latency: {receiving_time-timestamp:.2f} sec")
+    queue.put(storage)
     print("_"*80)
 
 
@@ -54,7 +58,7 @@ def check_plans(opp, block_number, block_timestamp):
 def log_stats(row_content):
     with open(RESULT_LOG_PATH, "a") as stats_file:
         writer = csv.DictWriter(stats_file, fieldnames=row_content.keys())
-        writer.writeheader()
+        # writer.writeheader()
         writer.writerow(row_content)
 
 
@@ -99,7 +103,7 @@ def main(provider_name, avl_opps):
 
 
 if __name__=="__main__":
-    provider_name = "infura"
+    provider_name = "quickNode"
     avl_opps = [EmptySet]
     main(provider_name, avl_opps)
 

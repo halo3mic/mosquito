@@ -94,6 +94,14 @@ class EmptySet:
 
         return self.opp_detected
 
+    def import_state(self, data):
+        for key, value in data.items():
+            setattr(self, key, value)
+
+    def export_state(self):
+        return {"nextEpochTimestamp": self.nextEpochTimestamp}
+
+
 
 class HalfRekt:
 
