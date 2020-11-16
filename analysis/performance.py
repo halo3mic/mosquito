@@ -51,22 +51,15 @@ class DummyEmptySetContract():
         return Method(self._get_epoch)
 
 
-def main(opp, block_number):
+def loop(opp, block_number):
     global CURRENT_TIMESTAMP
     block_info = w3.eth.getBlock(block_number)
     CURRENT_TIMESTAMP = block_timestamp = block_info.timestamp
 
-    # if block_number==target_block:
-    #     es.STORAGE["epoch"] += 1
-    # # Change the settings according to timestamp
-    # if block_timestamp >= 1602201600:
-    #     EmptySet.EPOCH_START = 1602201600
-    #     EmptySet.EPOCH_PERIOD = 28800
-    #     EmptySet.EPOCH_OFFSET = 106
-
     t1 = time.time()
     payload = opp(block_number, block_timestamp)
     t2 = time.time()
+    pprint(payload)
 
 
     new_row = {"blockNumber": block_number,
@@ -79,20 +72,8 @@ def main(opp, block_number):
     return new_row
 
 
-def get_past_opp():
-    df = pd.DataFrame(pd.read_csv("./logs/ESDpastTxData.csv"))
-    df_cut = df[(df.value=="1000000000000000000") & (df.timeStamp >= 1602201600)][["blockNumber", "timeStamp"]].sort_values(by="blockNumber", ascending=True)
-    df_cut.columns = ["number", "timestamp"]
-    return df_cut
-
-def get_current_timestamp():
-    return CURRENT_TIMESTAMP
-
-
-if __name__ == "__main__":
-    # EmptySet.EPOCH_OFFSET = 91;
-    # EmptySet.EPOCH_START = 1600905600;
-    # EmptySet.EPOCH_PERIOD = 86400;
+def main():
+    global CURRENT_TIMESTAMP, w3, es
     CURRENT_TIMESTAMP = 0  # Global
 
     # Logger settings
@@ -106,9 +87,8 @@ if __name__ == "__main__":
     provider_name = "quickNode"
     html_provider = NODE_INFO[provider_name]["html_path"]
     w3 = Web3(Web3.HTTPProvider(html_provider))
-    wallet_address = "0x2493336E00A8aDFc0eEDD18961A49F2ACAf8793f"
 
-    es = EmptySet(w3, wallet_address)
+    es = EmptySet(w3)  # It is global
     opp_blocks_df = get_past_opp()  # Df containing past tx for this opportunity
     opp_blocks = list(opp_blocks_df.itertuples(index=False))
     # Create dummy contract to replicate calls to the historical chain states
@@ -117,10 +97,24 @@ if __name__ == "__main__":
     # Loop through all the blocks where opportunity was found
     for opp_block in opp_blocks:
         for block_number in range(opp_block.number-3, opp_block.number+1):
-            new_row = main(es, block_number)
+            new_row = loop(es, block_number)
             writer.writerow(new_row)
             pprint(new_row)
-        
+
+
+def get_past_opp():
+    df = pd.DataFrame(pd.read_csv("./logs/ESDpastTxData.csv"))
+    df_cut = df[(df.value=="1000000000000000000") & (df.timeStamp >= 1602201600)][["blockNumber", "timeStamp"]].sort_values(by="blockNumber", ascending=True)
+    df_cut.columns = ["number", "timestamp"]
+    return df_cut
+
+
+def get_current_timestamp():
+    return CURRENT_TIMESTAMP
+
+
+if __name__ == "__main__":
+    main()
 
 
 
