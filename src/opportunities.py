@@ -1,4 +1,4 @@
-from src.config import *
+import src.config as cf
 from src.helpers import payload2bytes
 from src.exchanges import Uniswap
 
@@ -16,12 +16,12 @@ class EmptySet:
     trade_gas_used = 200000
     gas_limit_advance = 400000
     gas_limit_trade = 400000
-    wallet_address = DISPATCHER_ADDRESS
-    emptyset_proxy = ADDRESSES["emptyset"]["proxy"]
-    emptyset_implementation = ADDRESSES["emptyset"]["implementation"]
+    wallet_address = cf.address("dispatcher_address")
+    emptyset_proxy = cf.address("emptyset_proxy")
+    emptyset_implementation = cf.address("emptyset_implementation")
 
     def __init__(self, web3):
-        self.emptyset_contract = web3.eth.contract(address=self.emptyset_proxy, abi=ABIS[self.emptyset_implementation])
+        self.emptyset_contract = web3.eth.contract(address=self.emptyset_proxy, abi=cf.abi(self.emptyset_implementation))
         self.uniswap = Uniswap(web3)
         self.opp_detected = False
         self.nextEpochTimestamp = None
@@ -42,11 +42,10 @@ class EmptySet:
                             "calldata": emptyset_calldata, 
                             "gasLimit": self.gas_limit_advance
                         }
-        path = [ADDRESSES["tokens"]["esd"], ADDRESSES["tokens"]["usdc"], ADDRESSES["tokens"]["weth9"]]
-        uni_pools = ADDRESSES["uniswap"]
-        esd_reward = self.esd_reward * 10**TKN_DECIMALS["esd"]
-        reward_usdc = self.uniswap.get_amount_out(esd_reward, uni_pools["usdcesd"], inverse=1)
-        reward_eth = self.uniswap.get_amount_out(reward_usdc, uni_pools["ethusdc"], inverse=1)
+        path = [cf.address("esd"), cf.address("usdc"), cf.address("weth9")]
+        esd_reward = self.esd_reward * 10**cf.tkn_dec["esd"]
+        reward_usdc = self.uniswap.get_amount_out(esd_reward, cf.address("uni_usdcesd"), inverse=1)
+        reward_eth = self.uniswap.get_amount_out(reward_usdc, cf.address("uni_ethusdc"), inverse=1)
         trade_tx = self.uniswap.swapExactTokensForETH(self.esd_reward, 
                                                       reward_eth,
                                                       path, 
@@ -55,8 +54,8 @@ class EmptySet:
         payload = {
                     "blockNumber": block_number, 
                     "gasEstimate": self.advance_gas_used + self.trade_gas_used, 
-                    "supplierAddress": SUPPLIER_ADDRESS, 
-                    "botId": BOT_ID, 
+                    "supplierAddress": cf.address("supplier_address"), 
+                    "botId": cf.bot_id, 
                     "txs": [emptyset_tx, trade_tx], 
                     "estimatedProfit": reward_eth,
                     "profitCurrency": "ETH"

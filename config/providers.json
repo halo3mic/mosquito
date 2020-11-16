@@ -1,0 +1,27 @@
+{
+    "infura": {
+        "html_path": "https://mainnet.infura.io/v3/<<TOKEN>>",
+        "ws_path": "wss://mainnet.infura.io/ws/v3/<<TOKEN>>",  
+        "ws_blocks_request": {"jsonrpc":"2.0", "id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    },
+    "alchemy": {
+         "html_path": "https://eth-mainnet.alchemyapi.io/v2/<<TOKEN>>",
+         "ws_path": "wss://eth-mainnet.ws.alchemyapi.io/v2/<<TOKEN>>", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    },
+    "quickNode": {
+         "html_path": "https://crimson-holy-water.quiknode.pro/<<TOKEN>>/",
+         "ws_path": "wss://crimson-holy-water.quiknode.pro/<<TOKEN>>/", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    }, 
+    "localNode": {
+         "html_path": "http://localhost:7777", 
+         "ws_path": "ws://localhost:7778", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    },
+    "chainStack": {
+         "html_path": "https://youthful-goodall:<<TOKEN>>@nd-018-495-294.p2pify.com", 
+         "ws_path": "wss://youthful-goodall:<<TOKEN>>@ws-nd-018-495-294.p2pify.com", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    }
+}

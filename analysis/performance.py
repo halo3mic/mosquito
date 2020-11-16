@@ -3,8 +3,9 @@ from pprint import pprint
 import pandas as pd
 import csv
 import atexit
+from web3 import Web3
 
-from src.config import *
+import src.config as cf
 from src.opportunities import EmptySet
 
 
@@ -85,7 +86,7 @@ def main():
     writer.writeheader()
     # Web3 Settings
     provider_name = "quickNode"
-    html_provider = NODE_INFO[provider_name]["html_path"]
+    html_provider = cf.provider(provider_name).html_path
     w3 = Web3(Web3.HTTPProvider(html_provider))
 
     es = EmptySet(w3)  # It is global

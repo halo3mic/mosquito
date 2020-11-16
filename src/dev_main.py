@@ -1,12 +1,13 @@
 from multiprocessing import Process, Queue
+from web3 import Web3
 import websockets
 import asyncio
 import time
 import json
-import os
 import csv
+import os
 
-from src.config import *
+import src.config as cf
 from src.opportunities import EmptySet
 
 
@@ -56,7 +57,7 @@ def check_plans(opp, block_number, block_timestamp):
 
 
 def log_stats(row_content):
-    with open(RESULT_LOG_PATH, "a") as stats_file:
+    with open(cf.stats_log_path, "a") as stats_file:
         writer = csv.DictWriter(stats_file, fieldnames=row_content.keys())
         # writer.writeheader()
         writer.writerow(row_content)
@@ -89,27 +90,23 @@ def ws_receiver(uri, data_request, process_fun):
 
 def main(provider_name, avl_opps):
     global opps, provider
-    # Settings
-    html_provider = NODE_INFO[provider_name]["html_path"]
-    ws_provider = NODE_INFO[provider_name]["ws_path"]
-    data_request = NODE_INFO[provider_name]["ws_blocks_request"]
-    w3 = Web3(Web3.HTTPProvider(html_provider))
 
+    # Settings
+    provider_dict = cf.provider(provider_name)
+    html_provider = provider_dict.html_path
+    ws_provider = provider_dict.ws_path
+    data_request = provider_dict.ws_blocks_request
+    w3 = Web3(Web3.HTTPProvider(html_provider))
     # Globals vars
     opps = [plan(w3) for plan in avl_opps]
     provider = provider_name
-
+    # Start listening
     ws_receiver(ws_provider, data_request, process_w_log)
 
 
 def get_provider_sysdin():
-    all_providers = NODE_INFO.keys()
-    while 1:
-        provider_name = input("Provider: ")
-        if provider_name in all_providers:
-            return provider_name
-        os.system("clear")
-        print("Please select from the following providers: " + ", ".join(all_providers))
+    provider_name = input()
+    return provider_name
 
 
 if __name__=="__main__":

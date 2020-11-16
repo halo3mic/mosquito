@@ -1,4 +1,4 @@
-from src.config import *
+import src.config as cf
 import time
 import atexit
 import codecs
@@ -22,7 +22,7 @@ def transfer_erc20(token_address, reciver, amount):
 
 
 def balance_erc20(w3, holder_address, token_address):
-    tkn_contract = w3.eth.contract(address=token_address, abi=ABIS["erc20_token"])
+    tkn_contract = w3.eth.contract(address=token_address, abi=cf.abi("erc20_token"))
     decimals = tkn_contract.functions.decimals().call()
     balance = tkn_contract.functions.balanceOf(holder_address).call()
     return balance / 10**decimals

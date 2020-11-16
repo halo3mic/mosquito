@@ -1,0 +1,19 @@
+{
+    "halfrekt_exploiter": "0x223034EDbe95823c1160C16F26E3000315171cA9", 
+    "emptyset_implementation": "0xdAf2593AaF8EF040E279c806aaB8deDFE534d421", 
+    "emptyset_proxy": "0x443D2f2755DB5942601fa062Cc248aAA153313D3",
+
+    "uniswapv2_router02": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", 
+    "uni_ethnme": "0xddbE1dFC668233bb882014838DAE50deF5Ea967c", 
+    "uni_usdcesd": "0x88ff79eB2Bc5850F27315415da8685282C7610F9", 
+    "uni_ethusdc": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
+
+    "supplier_address": "0xCFb13c3248887Ab43d1777b63E57a84e8250A033", 
+    "dispatcher_address": "0xF451b59d6db7A6601B15d6250624db7329867bae",
+
+    "weth9": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 
+    "nme": "0x404A03728Afd06fB934e4b6f0EaF67796912733A", 
+    "esd": "0x36F3FD68E7325a35EB768F1AedaAe9EA0689d723", 
+    "usdc": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", 
+    "dai": "0x6B175474E89094C44Da98b954EedeAC495271d0F"
+}
