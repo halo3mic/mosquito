@@ -102,8 +102,18 @@ def main(provider_name, avl_opps):
     ws_receiver(ws_provider, data_request, process_w_log)
 
 
+def get_provider_sysdin():
+    all_providers = NODE_INFO.keys()
+    while 1:
+        provider_name = input("Provider: ")
+        if provider_name in all_providers:
+            return provider_name
+        os.system("clear")
+        print("Please select from the following providers: " + ", ".join(all_providers))
+
+
 if __name__=="__main__":
-    provider_name = "quickNode"
+    provider_name = get_provider_sysdin()
     avl_opps = [EmptySet]
     main(provider_name, avl_opps)
 
