@@ -1,1 +1,0 @@
-parity --light --jsonrpc-port 7777 --ws-port 7778 --jsonrpc-apis "personal,eth,web3,net" --no-ancient-blocks --reserved-peers=./enodes.txt 
