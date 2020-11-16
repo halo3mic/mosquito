@@ -69,6 +69,11 @@ NODE_INFO = {"infura": {
                  "html_path": "http://localhost:7777", 
                  "ws_path": "ws://localhost:7778", 
                  "ws_blocks_request": '{"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}'
+             },
+             "chainStack": {
+                 "html_path": "https://youthful-goodall:salsa-botch-stomp-twins-postal-emblem@nd-018-495-294.p2pify.com", 
+                 "ws_path": "wss://youthful-goodall:salsa-botch-stomp-twins-postal-emblem@ws-nd-018-495-294.p2pify.com", 
+                 "ws_blocks_request": '{"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}'
              }
             }
 
