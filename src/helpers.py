@@ -19,7 +19,7 @@ class Uniswap:
         
         return amount_out
 
-    def get_payload(self, input_amount, amount_out, path, gas_limit, to_address, tkn_slippage=0.01, time_slippage=300):
+    def swapExactTokensForETH(self, input_amount, amount_out, path, gas_limit, to_address, tkn_slippage=0.01, time_slippage=300):
         router_address = ADDRESSES["uniswap"]["uniswapv2_router02"]
         router_contract = self.web3.eth.contract(address=router_address, abi=ABIS["uniswapv2_router02"])
         function = "swapExactTokensForETH"
@@ -58,22 +58,19 @@ def balance_erc20(w3, holder_address, token_address):
     return balance / 10**decimals
 
 
-def str2hex(text):
-    return codecs.encode(text.encode(), "hex").decode()
-
-
-def int2hex(digit):
-    return format(int(digit), "x")
-
-
-def prepare(arg, atype):
-    methods = {"a": lambda x: x.split("x")[1].zfill(64), 
-               "i": lambda x: int2hex(x).zfill(64), 
-               "s": lambda x: str2hex(x).zfill(64)}
-    return methods[atype](arg)
-
-
 def payload2bytes(payload):
+    def str2hex(text):
+        return codecs.encode(text.encode(), "hex").decode()
+
+    def int2hex(digit):
+        return format(int(digit), "x")
+
+    def prepare(arg, atype):
+        methods = {"a": lambda x: x.split("x")[1].zfill(64), 
+                   "i": lambda x: int2hex(x).zfill(64), 
+                   "s": lambda x: str2hex(x).zfill(64)}
+        return methods[atype](arg)
+
     args = [("botId", "s"), 
             ("supplierAddress", "a"), 
             ("blockNumber", "i"), 
@@ -97,45 +94,15 @@ def payload2bytes(payload):
     return byteload
 
 
-def bytes2payload(byteload):
-    args = [("botId", "s"), 
-            ("supplierAddress", "a"), 
-            ("blockNumber", "i"), 
-            ("gasEstimate", "i"), 
-            ("estimatedProfit", "i"), 
-            ("profitCurrency", "s")]
-    chunks_args = [byteload[i:i+64] for i in range(0, len(args)*64, 64)]
-    tx_ln_raw = byteload[len(args)*64: len(args)*64+64]
-    tx_ln = int(tx_ln_raw, 16)
-
-    x = len(args)*64+64
-    chunks_txs = []
-    for _ in range(1, tx_ln+1):
-        contract_address = byteload[x:x+64]
-        x += 64
-        gas_limit = byteload[x:x+64]
-        x += 64
-        calldata_length = byteload[x:x+64]
-        x += 64
-        chunks_txs += [contract_address, gas_limit, calldata_length]
-        calldata_ln_int = int(calldata_length, 16)*2
-        calldata_ln_int = calldata_ln_int if calldata_ln_int > 64 else 64
-        calldata = byteload[x:x+calldata_ln_int]
-        chunks_txs += [calldata]
-        x += calldata_ln_int
-
-    return chunks_args + [tx_ln_raw] + chunks_txs
-
-
 def execute_payload(w3, payload, wallet_address):
-    gas_price = w3.eth.gasPrice
-    nonce = w3.eth.getTransactionCount(wallet_address)
+    # gas_price = w3.eth.gasPrice
+    # nonce = w3.eth.getTransactionCount(wallet_address)
+    # Add option to sign the tx
     tx = {
           "gasLimit": payload["gasLimit"],
           "from": wallet_address,
           "to": payload["contractAddress"],
           "data": payload["calldata"]}
-
     tx_hash = w3.eth.sendTransaction(tx).hex()
     
     return tx_hash  

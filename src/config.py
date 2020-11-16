@@ -7,6 +7,7 @@ _env_vals = dotenv_values("./.env")
 
 BOT_ID = "MSQT1"
 SUPPLIER_ADDRESS = "0xCFb13c3248887Ab43d1777b63E57a84e8250A033"
+DISPATCHER_ADDRESS = "0xF451b59d6db7A6601B15d6250624db7329867bae"
 RESULT_LOG_PATH = "./logs/stats.csv"
 
 # ADDRESSES
@@ -71,15 +72,10 @@ NODE_INFO = {"infura": {
                  "ws_blocks_request": '{"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}'
              },
              "chainStack": {
-                 "html_path": "https://youthful-goodall:salsa-botch-stomp-twins-postal-emblem@nd-018-495-294.p2pify.com", 
+                 "html_path": f"https://youthful-goodall:{_env_vals['CHAINSTACK_TOKEN']}@nd-018-495-294.p2pify.com", 
                  "ws_path": "wss://youthful-goodall:salsa-botch-stomp-twins-postal-emblem@ws-nd-018-495-294.p2pify.com", 
                  "ws_blocks_request": '{"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}'
              }
             }
 
 
-# WALLETS
-# WALLETS = {"Test account": (_env_vals['ADDRESS'], _env_vals['PRIVATE_KEY'])}
-
-# INSTANCE STORAGE
-# STORAGE = {}
