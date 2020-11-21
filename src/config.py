@@ -40,7 +40,9 @@ def abi(abi_name):
 
 
 def provider(provider_name):
-    return SimpleNamespace(**_INTERNAL_STORAGE["providers"].get(provider_name))
+    provider_obj = SimpleNamespace(**_INTERNAL_STORAGE["providers"].get(provider_name))
+    provider_obj.name = provider_name
+    return provider_obj
 
 
 def address(address_key):
@@ -54,7 +56,6 @@ _fetch_abis()
 _fetch_providers()
 _fetch_addresses()
 bot_id = "MSQT1"
-stats_log_path = "./logs/stats.csv"
 tkn_dec = {"esd": 18, 
            "nme": 18, 
            "weth9": 18, 

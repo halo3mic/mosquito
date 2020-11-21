@@ -20,8 +20,8 @@
          "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
     },
     "chainStack": {
-         "html_path": "https://youthful-goodall:<<TOKEN>>@nd-018-495-294.p2pify.com", 
-         "ws_path": "wss://youthful-goodall:<<TOKEN>>@ws-nd-018-495-294.p2pify.com", 
+         "html_path": "https://stoic-leakey:<<TOKEN>>@nd-436-022-385.p2pify.com", 
+         "ws_path": "wss://stoic-leakey:<<TOKEN>>@ws-nd-436-022-385.p2pify.com", 
          "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
     }
 }
