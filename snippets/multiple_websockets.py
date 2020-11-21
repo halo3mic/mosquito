@@ -16,11 +16,11 @@ def process(provider_name):
         timestamp = int(msg["timestamp"].lstrip("0x"), 16) 
         first = False
         if block_number>last_block:
-            # print("*"*50)
-            # print(block_number)
-            # print(rec_time - timestamp)
-            # print(provider_name)  
-            # print("*"*50)
+            print("*"*50)
+            print(block_number)
+            print(rec_time - timestamp)
+            print(provider_name)  
+            print("*"*50)
             first = True
             q.put(block_number)
         else:
