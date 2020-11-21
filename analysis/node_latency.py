@@ -86,7 +86,7 @@ def main(provider_name):
 
 if __name__ == "__main__":
     # provider = input()
-    provider = "localNode"
+    provider = "kaleido"
     main(provider)
     # fieldnames = ["blockNumber", "blockTimestamp", "receivingTime", "processingTime", "opportunityFound", "providerName"]
     # result_log_path = "./logs/node_latency.csv"

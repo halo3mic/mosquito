@@ -19,9 +19,19 @@
          "ws_path": "ws://localhost:7778", 
          "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
     },
-    "chainStack": {
+    "chainStackAsia": {
          "html_path": "https://stoic-leakey:<<TOKEN>>@nd-436-022-385.p2pify.com", 
          "ws_path": "wss://stoic-leakey:<<TOKEN>>@ws-nd-436-022-385.p2pify.com", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    },
+    "chainStackUsa": {
+         "html_path": "https://boring-raman:<<TOKEN>>@nd-444-381-020.p2pify.com", 
+         "ws_path": "wss://boring-raman:<<TOKEN>>@ws-nd-444-381-020.p2pify.com", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    },
+    "kaleido": {
+         "html_path": "https://k0sniwshxq:<<TOKEN>>@k0ikgiwmqr-k0xj07csjf-rpc.kr0-aws.kaleido.io/", 
+         "ws_path": "wss://k0sniwshxq:<<TOKEN>>@k0ikgiwmqr-k0xj07csjf-wss.kr0-aws.kaleido.io/", 
          "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
     }
 }

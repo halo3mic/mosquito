@@ -79,7 +79,7 @@ async def handler(providers):
     await asyncio.wait(threads)
 
 def main():
-    provider_names = ["infura", "quickNode", "alchemy", "chainStack"]
+    provider_names = ["chainStackAsia", "chainStackUsa"]
     providers = [provider(p) for p in provider_names]
     asyncio.get_event_loop().run_until_complete(handler(providers))
 
