@@ -23,15 +23,17 @@ class EmptySet:
     def __init__(self, web3):
         self.emptyset_contract = web3.eth.contract(address=self.emptyset_proxy, abi=cf.abi(self.emptyset_implementation))
         self.uniswap = Uniswap(web3)
-        self.opp_detected = False
-        self.nextEpochTimestamp = None
+        self.last_opp_block = 0
+        self.nextEpochTimestamp = 0
         self.epoch = None
+        self.web3 = web3
 
     def __str__(self):
         return "EmptySet"
 
-    def __call__(self, block_number, block_timestamp):
+    def __call__(self, block_timestamp):
         if self.is_epoch(block_timestamp):
+            block_number = self.web3.eth.blockNumber
             payload = self.get_payload(block_number)
             byteload = payload2bytes(payload)
             return byteload
@@ -71,18 +73,24 @@ class EmptySet:
         self.nextEpochTimestamp = tm
         return tm
 
+    def target_timestamp(self):
+        return self.nextEpochTimestamp
+
     def _get_epoch(self):
         et = self.emptyset_contract.functions.epoch().call()
         self.epoch = et
         return et
 
     def is_epoch(self, block_timestamp):
-        target_timestamp = self.nextEpochTimestamp
-        if not target_timestamp or self.opp_detected or (target_timestamp - block_timestamp < 0):
-            target_timestamp = self.nextEpochTimestamp = self._get_target_timestamp()              
-        self.opp_detected = (target_timestamp - block_timestamp) < self.tm_threshold 
-
-        return self.opp_detected
+        if self.nextEpochTimestamp - block_timestamp <= self.tm_threshold:
+            block_number = self.web3.eth.blockNumber
+            if block_number == self.last_opp_block:
+                return
+            elif block_number-self.last_opp_block<10 or self.nextEpochTimestamp<block_timestamp:
+                self.nextEpochTimestamp = self._get_target_timestamp()
+            if self.nextEpochTimestamp - block_timestamp <= self.tm_threshold:
+                self.last_opp_block = block_number
+                return True
 
     def import_state(self, data):
         for key, value in data.items():
