@@ -56,6 +56,7 @@ _fetch_abis()
 _fetch_providers()
 _fetch_addresses()
 bot_id = "MSQT1"
+archer_api_endpoint = "http://127.0.0.1:5000/submit"
 tkn_dec = {"esd": 18, 
            "nme": 18, 
            "weth9": 18, 

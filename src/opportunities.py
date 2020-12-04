@@ -10,7 +10,7 @@ class EmptySet:
     EPOCH_START = 1602201600
     EPOCH_PERIOD = 28800
     EPOCH_OFFSET = 106
-    tm_threshold = 15  # Threshold in seconds for when to trigger the opportunity
+    tm_threshold = 20  # Threshold in seconds for when to trigger the opportunity
     esd_reward = 100
     advance_gas_used = 300000
     trade_gas_used = 200000
@@ -107,3 +107,39 @@ class EmptySet:
         et = int(et)
         return et
 
+    def coupons(self):
+        return self.emptyset_contract.functions.totalRedeemable().call()
+
+
+class AlphaFinance: 
+
+
+    def __init__(self, web3):
+        self.web3 = web3
+
+    def __str__(self):
+        return "AlphaFinance"
+
+    def __call__(self):
+        worker = "0x4668fF4D478C5459d6023C4a7EfdA853412fb999"
+        staking = "0x6C3e4cb2E96B01F4b866965A91ed4437839A121a"
+        contract = self.web3.eth.contract(address=staking, abi=cf.abi(staking))
+        earned = contract.functions.earned(worker).call()
+        return earned
+
+    def get_all_goblins(self):
+        bank_address = cf.address("alpha_bank")
+        bank_contract = self.web3.eth.contract(address=bank_address, abi=cf.abi(bank_address))
+        goblins = set()
+        c = 1
+        while 1:
+            goblin, *_ = bank_contract.functions.positions(c).call()
+            if goblin=="0x0000000000000000000000000000000000000000":
+                break
+            goblins.add(goblin)
+            print(goblin)
+            c += 1
+
+        return goblins
+
+    

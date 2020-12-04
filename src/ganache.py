@@ -2,6 +2,8 @@ import subprocess
 import requests
 import json
 import re
+import src.config as cf
+from web3 import Web3
 
 
 class Ganache:
@@ -80,3 +82,12 @@ class Ganache:
     def kill(self):
         if self.process:
             self.process.kill()
+
+
+if __name__ == "__main__":
+    provider_obj = cf.provider("infura")
+    ganache_process = Ganache(provider_obj.html_path)
+    ganache_process.start_node()
+    print(ganache_process.node_path)
+    input("Press enter to stop")
+    ganache_process.kill()

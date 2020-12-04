@@ -2,6 +2,7 @@ import src.config as cf
 import time
 import atexit
 import codecs
+import requests
 
 
 def approve_erc20(token_address, spender, amount=-1):
@@ -76,4 +77,14 @@ def execute_payload(w3, payload, wallet_address):
     tx_hash = w3.eth.sendTransaction(tx).hex()
     
     return tx_hash  
+
+
+def send2archer(byteload):
+    payload = {"id": cf.bot_id, "byteload": byteload}
+    print(cf.archer_api_endpoint)
+    print(payload)
+    r = requests.post(cf.archer_api_endpoint, payload)
+    print(r)
+    return r
+
 

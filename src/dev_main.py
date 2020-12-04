@@ -9,6 +9,7 @@ import os
 
 import src.config as cf
 from src.opportunities import EmptySet
+from src.helpers import send2archer, payload2bytes
 
 
 class Listener:
@@ -98,6 +99,8 @@ class Listener:
     def process2(self, timestamp, opp, log=True, print_logs=True):
         t0 = time.time()
         opp_response = opp(timestamp)
+        # block_number = opp.web3.eth.blockNumber
+        # opp_response = payload2bytes(opp.get_payload(block_number))
         t1 = time.time()
         processing_time_opp = t1 - t0
 
@@ -112,6 +115,8 @@ class Listener:
                 "byteload": opp_response
                     }
         if opp_response and log:
+            response = send2archer(opp_response)
+            stats["apiResponse"] = response
             self.save_logs(stats)
         if print_logs:
             os.system("clear")
@@ -121,18 +126,23 @@ class Listener:
     def run_time_listener(self, wait_time=1):
         while 1:
             timestamp = time.time()
+            wait_time = 1000000
             for opp in self.opps:
                 # Later make this concurrent
                 self.process2(timestamp, opp)
+                opp_wait_time = opp.target_timestamp() - timestamp - opp.tm_threshold
+                wait_time = min(wait_time, max(opp_wait_time, 1))
+            print(f"Sleeping for {wait_time} sec")
             time.sleep(wait_time)
+
 
 
 if __name__=="__main__":
     avl_opps = [EmptySet]
-    provider_name = "chainStackAsia"
+    provider_name = "quickNode"
     listener = Listener(provider_name, avl_opps)
-    # listener.run_time_listener()
-    listener.run_block_listener()
+    listener.run_time_listener()
+    # listener.run_block_listener()
 
 
     
