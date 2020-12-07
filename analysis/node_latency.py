@@ -5,13 +5,12 @@ import json
 from pprint import pprint
 
 from src.config import *
-from src.dev_main import ws_receiver
+from src.dev_main import Listener
 from src.opportunities import EmptySet
 
 
-def process_input_w_log(msg_org, queue):
+def process_input_w_log(msg_org, queue, log=True, print_logs=True):
     receiving_time = time.time()
-    global starting_block, es
     os.system("clear")
     opp = es
     # for _ in range(opps.qsize()):
@@ -37,7 +36,7 @@ def process_input_w_log(msg_org, queue):
                "providerName": provider, 
                "opportunity": str(opp)
                }
-    log_results(results)
+    if log: log_results(results)
 
 
     blocks_processed = block_number - starting_block
@@ -64,21 +63,23 @@ def main(provider_name):
     result_log_path = "./logs/node_latency.csv"
     error_log_path = "./logs/errors.txt"
     wallet_address = "0x2493336E00A8aDFc0eEDD18961A49F2ACAf8793f"
-    html_provider = NODE_INFO[provider_name]["html_path"]
-    ws_provider = NODE_INFO[provider_name]["ws_path"]
-    data_request = NODE_INFO[provider_name]["ws_blocks_request"]
-    w3 = Web3(Web3.HTTPProvider(html_provider))
+    # html_provider = NODE_INFO[provider_name]["html_path"]
+    # ws_provider = NODE_INFO[provider_name]["ws_path"]
+    # data_request = NODE_INFO[provider_name]["ws_blocks_request"]
+    # w3 = Web3(Web3.HTTPProvider(html_provider))
 
     # Globals vars
-    es = EmptySet(w3, wallet_address)
-    starting_block = w3.eth.blockNumber
+    # es = EmptySet(w3, wallet_address)
+    # starting_block = w3.eth.blockNumber
     provider = provider_name
+    avl_opps = [EmptySet]
 
     last_error = None
     while 1:
         try:
             print("Logger started ...")
-            ws_receiver(ws_provider, data_request, process_input_w_log)
+            listener = Listener(provider_name, avl_opps)
+            listener.run_block_listener()
         except Exception as e:
             raise e
 
@@ -86,7 +87,7 @@ def main(provider_name):
 
 if __name__ == "__main__":
     # provider = input()
-    provider = "kaleido"
+    provider = "chainStackBlocklytics"
     main(provider)
     # fieldnames = ["blockNumber", "blockTimestamp", "receivingTime", "processingTime", "opportunityFound", "providerName"]
     # result_log_path = "./logs/node_latency.csv"

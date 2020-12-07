@@ -16,16 +16,18 @@ class Listener:
 
     save_logs_path = "./logs/stats.csv"
 
-    def __init__(self, provider_name, avl_opps):
+    def __init__(self, provider_name, avl_opps, log=True, print_logs=True):
         self.provider = cf.provider(provider_name)
         self.opps = self._get_opps(avl_opps)
+        self.log = log
+        self.print_logs = print_logs
         # Make queue an attribute
 
     def _get_opps(self, avl_opps):
         w3 = Web3(Web3.HTTPProvider(self.provider.html_path))
         return [plan(w3) for plan in avl_opps]
 
-    def process_block_headers(self, msg_org, queue, log=True, print_logs=True):
+    def process_block_headers(self, msg_org, queue):
         receiving_time = time.time()
         msg = json.loads(msg_org)["params"]["result"]
         block_number = int(msg["number"].lstrip("0x"), 16)
@@ -52,14 +54,14 @@ class Listener:
                        "opportunity": str(opp), 
                        "byteload": opp_response
                        }
-            if log:
+            if self.log:
                 self.save_logs(stats)
 
             stdout_str += f"\nOPP {opp}: {bool(opp_response)}"
             stdout_str += f"\nTime taken: {processing_time_all:.4f} sec"
             stdout_str += f"\nLatency: {receiving_time-timestamp:.2f} sec"
         queue.put(storage)
-        if print_logs:
+        if self.print_logs:
             stdout_str += "\n"+"_"*80
             os.system("clear")
             print(stdout_str)
@@ -71,13 +73,13 @@ class Listener:
             # writer.writeheader()
             writer.writerow(row_content)
 
-    def run_block_listener(self):
+    def run_block_listener(self, fun=None):
+        fun = self.process_block_headers if fun is None else fun
         # time_zero = time.time()
         q = Queue()
         q.put({})
 
         async def _start_listening():
-            
             async with websockets.connect(self.provider.ws_path) as websocket:
                 await websocket.send(self.provider.ws_blocks_request)
                 await websocket.recv()
@@ -90,7 +92,7 @@ class Listener:
                     if future_event: 
                         future_event.kill()
                         # print("Killed process")
-                    future_event = Process(target=self.process_block_headers, args=(message, q))
+                    future_event = Process(target=fun, args=(message, q))
                     future_event.start()
 
         return asyncio.get_event_loop().run_until_complete(_start_listening())
@@ -123,6 +125,7 @@ class Listener:
             print(f"Timestamp: {timestamp:.0f} | Opp found: {bool(opp_response)}")
             print(f"Time left: {opp.target_timestamp()-timestamp:.0f} sec | Process time: {processing_time_opp} sec")
 
+
     def run_time_listener(self, wait_time=1):
         while 1:
             timestamp = time.time()
@@ -139,10 +142,10 @@ class Listener:
 
 if __name__=="__main__":
     avl_opps = [EmptySet]
-    provider_name = "quickNode"
+    provider_name = "chainStackBlocklytics"
     listener = Listener(provider_name, avl_opps)
-    listener.run_time_listener()
-    # listener.run_block_listener()
+    # listener.run_time_listener()
+    listener.run_block_listener()
 
 
     

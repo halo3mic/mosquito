@@ -29,6 +29,11 @@
          "ws_path": "wss://boring-raman:<<TOKEN>>@ws-nd-444-381-020.p2pify.com", 
          "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
     },
+    "chainStackBlocklytics": {
+         "html_path": "https://reverent-hypatia:<<TOKEN>>@nd-708-772-246.p2pify.com", 
+         "ws_path": "wss://reverent-hypatia:<<TOKEN>>@ws-nd-708-772-246.p2pify.com", 
+         "ws_blocks_request": {"jsonrpc":"2.0","id": 1, "method": "eth_subscribe", "params": ["newHeads"]}
+    },
     "kaleido": {
          "html_path": "https://k0sniwshxq:<<TOKEN>>@k0ikgiwmqr-k0xj07csjf-rpc.kr0-aws.kaleido.io/", 
          "ws_path": "wss://k0sniwshxq:<<TOKEN>>@k0ikgiwmqr-k0xj07csjf-wss.kr0-aws.kaleido.io/", 
