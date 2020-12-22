@@ -142,4 +142,16 @@ class AlphaFinance:
 
         return goblins
 
+
+class ArbBot:
+
+    def __init__(self):
+        pass
+
+    def import_state(self):
+        pass
+
+    def export_state(self):
+        pass
+
     

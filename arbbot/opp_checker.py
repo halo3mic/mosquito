@@ -9,9 +9,9 @@ from pprint import pprint
 
 
 def timeit(fun):
-    def _wrapper():
+    def _wrapper(*args):
         t0 = time.time()
-        response = fun()
+        response = fun(*args)
         tdiff = time.time()-t0
         print(f"Runtime: {tdiff:.2f}s")
         return response
@@ -20,15 +20,15 @@ def timeit(fun):
 
 def check4prof(ex1, ex2, pool1, pool2, fee1=0.003, fee2=0.003):
     ss_reserve_tkn1, ss_reserve_tkn2, _ =  ex1.get_reserves(pool1)
-    uni_reserve_tkn1, uni_reserve_tkn2, _ = ex2.get_reserves(pool2)
-
-    params = {"reserveOfToken1InPool1": uni_reserve_tkn2, 
-            "reserveOfToken2InPool1": uni_reserve_tkn1, 
-            "reserveOfToken1InPool2": ss_reserve_tkn2, 
-            "reserveOfToken2InPool2": ss_reserve_tkn1, 
+    uni_reserve_tkn1, uni_reserve_tkn2, _ = ex2.get_reserves(pool2) 
+    params = {"reserveOfToken1InPool1": uni_reserve_tkn2 / 10**18, 
+            "reserveOfToken2InPool1": uni_reserve_tkn1 / 10**18, 
+            "reserveOfToken1InPool2": ss_reserve_tkn2 / 10**18, 
+            "reserveOfToken2InPool2": ss_reserve_tkn1 / 10**18, 
             "feeInPool1": 0.003,
             "feeInPool2": 0.003
             }
+    # print(params)
     result1 = optimal_amount.run(params)
     result2 = optimal_amount.run(params, reverse=1)
     return result1, result2
@@ -38,18 +38,15 @@ def async_check4prof(ex1, ex2):
     def _wrapper(pair):
         pool1 = cf.address(pair[0])
         pool2 = cf.address(pair[1])
-        return check4prof(ex1, ex2, pool1, pool2)
+        opp_str = f"{pair[0]}|{pair[1]}"
+        return opp_str, check4prof(ex1, ex2, pool1, pool2)
     return _wrapper
 
 
 @timeit
-def main_sync():
-    provider_name = "chainStackBlocklytics"
-    w3 = cf.web3_api_session(provider_name)
+def main_sync(w3, pools):
     ss = SushiSwap(w3)
     uni = Uniswap(w3)
-    pools = [("ss_wbtcweth", "uni_wbtcweth"), 
-             ("ss_linkweth", "uni_linkweth")]
     responses = []
     for pool_pair in pools:
         pool1 = cf.address(pool_pair[0])
@@ -60,9 +57,7 @@ def main_sync():
 
 
 @timeit
-def main_async():
-    provider_name = "chainStackBlocklytics"
-    w3 = cf.web3_api_session(provider_name)
+def main_async(w3):
     ss = SushiSwap(w3)
     uni = Uniswap(w3)
     pools = [("ss_wbtcweth", "uni_wbtcweth"), 
@@ -72,6 +67,8 @@ def main_async():
              ("ss_yfiweth", "uni_yfiweth"),
              ("ss_kp3rweth", "uni_kp3rweth"),
              ("ss_snxweth", "uni_snxweth"),
+             ("ss_bandweth", "uni_bandweth"),
+             ("ss_amplweth", "uni_amplweth"),
              ]
     fun = async_check4prof(ss, uni)
     with ThreadPoolExecutor() as executor:
@@ -81,7 +78,9 @@ def main_async():
 
 
 if __name__ == "__main__":
-    rs = main_async()
+    provider_name = "chainStackBlocklytics"
+    w3 = cf.web3_api_session(provider_name)
+    rs = main_async(w3)
     for r in rs:
         pprint(r)
     

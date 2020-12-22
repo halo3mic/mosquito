@@ -3,14 +3,14 @@ import src.config as cf
 
 class Uniswap:
 
+    fee = 0.003
 
     def __init__(self, web3):
         self.web3 = web3
         self.fee = 0.003
         
     def get_amount_out(self, input_amount, pool_address, inverse=False):
-        pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2"))
-        bal0, bal1, _ = pool_contract.functions.getReserves().call()
+        bal0, bal1, _ = self.get_reserves(pool_address)
         if inverse: bal0, bal1 = bal1, bal0
         amount_out = (1 - bal1/(bal1+input_amount)) * bal0 * (1-self.fee)
         
@@ -29,3 +29,21 @@ class Uniswap:
                   }
 
         return payload
+
+    def get_reserves(self, pool_address):
+        pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2"))
+        bal0, bal1, last_update = pool_contract.functions.getReserves().call()
+        return bal0, bal1, last_update
+
+
+class SushiSwap:
+
+    fee = 0.003
+
+    def __init__(self, web3):
+        self.web3 = web3
+
+    def get_reserves(self, pool_address):
+        pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2"))
+        bal0, bal1, last_update = pool_contract.functions.getReserves().call()
+        return bal0, bal1, last_update
