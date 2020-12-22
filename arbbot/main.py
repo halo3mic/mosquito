@@ -79,7 +79,10 @@ class ArbBot:
         return result1, result2
 
     def check4prof(self, atm_opp):
+        t0 = time.time()
         r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = self.fetch_reserves(atm_opp)
+        t1 = time.time()
+        print(f"Fetching reserves took: {t1-t0:.2f}")
         params = {"reserveOfToken1InPool1": r_p1_t2, 
                 "reserveOfToken2InPool1": r_p1_t1, 
                 "reserveOfToken1InPool2": r_p2_t2, 
@@ -112,7 +115,7 @@ class ArbBot:
 
 
 if __name__ == "__main__":
-    provider_name = "chainStackBlocklytics"
+    provider_name = "alchemy"
     provider = cf.provider(provider_name)
     w3 = cf.web3_api_session(provider_name)
     bot = ArbBot(w3)
