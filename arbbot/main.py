@@ -11,16 +11,9 @@ import websockets
 from multiprocessing import Process, Queue
 import asyncio
 import time
+import json
 
-
-
-def save_logs(row_content, save_as):
-    # Move this function to helpers
-    # + create listeners module
-    with open(save_as, "a") as stats_file:
-        writer = csv.DictWriter(stats_file, fieldnames=row_content.keys())
-        # writer.writeheader()
-        writer.writerow(row_content)
+from pprint import pprint
 
 
 class ArbBot:
@@ -29,7 +22,6 @@ class ArbBot:
 
     def __init__(self, w3, selection=None):
         self.web3 = w3
-        self.last_timestamp = None
         self.atm_opps = get_atm_opps(select=selection)
         self.exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3)}
 
@@ -37,22 +29,33 @@ class ArbBot:
         print("...")
         self.last_timestamp = time.time()
         responses = self.calculate_async(self.web3)
-        self.reponse_manager(responses)
+        profitables = self.response_manager(responses)
+        print("***")
+        if profitables:
+            pprint(profitables)
+            self.save_logs(profitables, block_number)
+            total_profit = self.sum_profits(profitables)
+            return total_profit
 
-    def reponse_manager(self, responses):
+    def __str__(self):
+        return "ArbBot"
 
+    def response_manager(self, responses):
+        profitable_opps = []
         for r in responses:
             name, results = r
             if results[0]["arb_available"]:
                 profit = results[0]["estimated_output_amount"] - results[0]["optimal_input_amount"]
-                self.save_opp(name, round_sig(profit))
-                print(name+"1", round_sig(profit))
+                profitable_opps.append({"name": name+"_o", "profit": round_sig(profit)})
             if results[1]["arb_available"]:
                 profit = results[1]["estimated_output_amount"] - results[1]["optimal_input_amount"]
-                self.save_opp(name, round_sig(profit))
-                print(name, round_sig(profit))
+                profitable_opps.append({"name": name+"_r", "profit": round_sig(profit)})
 
-        return []
+        return profitable_opps
+    
+    @staticmethod
+    def sum_profits(opps):
+        return sum(opp["profit"] for opp in opps)
 
     def fetch_reserves(self, atm_opp):
         pool1, pool2 = atm_opp.pool1, atm_opp.pool2
@@ -93,43 +96,27 @@ class ArbBot:
             responses = executor.map(self.check4prof, self.atm_opps)
         return responses
 
-    def save_opp(self, name, profit):
-        data = {"name": name, "profit": profit, "timestamp": self.last_timestamp}
-        save_logs(data, self.save_logs_path)
+    def save_logs(self, data, block_number):
+        columns = ["block"] + list(data[0].keys())
+        with open(self.save_logs_path, "a") as stats_file:
+            writer = csv.DictWriter(stats_file, fieldnames=columns)
+            for row in data:
+                writer.writerow(row)
+
+    def import_state(self, data):
+        for key, value in data.items():
+            setattr(self, key, value)
+
+    def export_state(self):
+        return {"amt_opps": self.atm_opps, "exchanges": self.exchanges}
 
 
-def run_block_listener(provider, fun):
-    # time_zero = time.time()
-
-    async def _start_listening():
-        async with websockets.connect(provider.ws_path) as websocket:
-            await websocket.send(provider.ws_blocks_request)
-            await websocket.recv()
-            future_event = None
-            while 1:
-                # print("Starting listening: ", time.time()-time_zero)   
-                _ = await websocket.recv()
-                # print("Finished listening: ", time.time()-time_zero)
-
-                if future_event: 
-                    future_event.kill()
-                    # print("Killed process")
-                future_event = Process(target=fun, args=(0, 0))
-                future_event.start()
-
-    return asyncio.get_event_loop().run_until_complete(_start_listening())
-
-
-def run():
+if __name__ == "__main__":
     provider_name = "chainStackBlocklytics"
     provider = cf.provider(provider_name)
     w3 = cf.web3_api_session(provider_name)
     bot = ArbBot(w3)
-    run_block_listener(provider, bot)
-
-
-if __name__ == "__main__":
-    run()
+    # run_block_listener(provider, bot)
 
 
 
