@@ -1,0 +1,10 @@
+id,symbol,pool1,pool2,tkn1,tkn2
+A0001,wbtcweth_ssuni,P0002,P0011,0,1
+A0002,linkweth_ssuni,P0003,P0012,0,1
+A0003,daiweth_ssuni,P0004,P0013,0,1
+A0004,sushiweth_ssuni,P0005,P0014,0,1
+A0005,yfiweth_ssuni,P0006,P0015,0,1
+A0006,kp3rweth_ssuni,P0007,P0016,0,1
+A0007,snxweth_ssuni,P0008,P0017,0,1
+A0008,bandweth_ssuni,P0009,P0018,0,1
+A0009,amplweth_ssuni,P0010,P0019,1,0
