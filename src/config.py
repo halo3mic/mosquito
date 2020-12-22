@@ -25,8 +25,11 @@ def _fetch_providers():
         providers[key]["ws_blocks_request"] = json.dumps(providers_raw[key]["ws_blocks_request"])
         for ikey, ival in value.items():
             if "<<TOKEN>>" in ival:
-                keyword = key.upper() + "_TOKEN" 
-                providers[key][ikey] = ival.replace("<<TOKEN>>", _ENV_VALS[keyword])
+                keyword = key.upper() + "_TOKEN"
+                secret = _ENV_VALS.get(keyword)
+                if not secret:
+                    break
+                providers[key][ikey] = ival.replace("<<TOKEN>>", secret)
     _INTERNAL_STORAGE["providers"] = providers
 
 
@@ -67,6 +70,7 @@ _fetch_providers()
 _fetch_addresses()
 bot_id = "MSQT1"
 archer_api_endpoint = "http://127.0.0.1:5000/submit"
+save_logs_path = "./logs/stats.csv"
 tkn_dec = {"esd": 18, 
            "nme": 18, 
            "weth9": 18, 

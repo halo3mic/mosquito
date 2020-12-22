@@ -31,9 +31,8 @@ class EmptySet:
     def __str__(self):
         return "EmptySet"
 
-    def __call__(self, block_timestamp):
+    def __call__(self, block_number, block_timestamp):
         if self.is_epoch(block_timestamp):
-            block_number = self.web3.eth.blockNumber
             payload = self.get_payload(block_number)
             byteload = payload2bytes(payload)
             return byteload

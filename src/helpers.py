@@ -4,6 +4,7 @@ import atexit
 import codecs
 import requests
 from math import floor, log10
+import csv
 
 
 def approve_erc20(token_address, spender, amount=-1):
@@ -95,4 +96,7 @@ def round_sig(x, sig=4):
     rounded = int(rounded) if float(rounded).is_integer() else rounded  # 1.0 --> 1
     return rounded
 
-
+def save_logs(row_content, save_as):
+    with open(save_as, "a") as log_file:
+        writer = csv.DictWriter(log_file, fieldnames=row_content.keys())
+        writer.writerow(row_content)
