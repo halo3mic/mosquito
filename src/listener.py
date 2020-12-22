@@ -38,7 +38,7 @@ class Listener:
         for opp in self.opps:
             opp.import_state(storage.get(str(opp), {}))
             t0 = time.time()
-            opp_response = opp(timestamp)
+            opp_response = opp(block_number, timestamp)
             t1 = time.time()
             storage[str(opp)] = opp.export_state()
             processing_time_opp = t1 - t0

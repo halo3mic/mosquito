@@ -27,11 +27,9 @@ def deserialize(fltr=None):
     tkns_path = "./config/tokens.csv"
     pools_path = "./config/pools.csv"
     atomic_path = "./config/atomic_opps.csv"
-
     # Fetch and seralize all the tokens
     tkn_dict = fetch_data(tkns_path)
     tkns = rows2namedtuples("Token", tkn_dict)
-
     # Fetch all pools
     pool_dict = fetch_data(pools_path)
     # In pools replace token strings with token objects
@@ -40,7 +38,6 @@ def deserialize(fltr=None):
         pool_dict["tokens"][i] = [tkns[tkn_id] for tkn_id in pool_tkn_ids]
     # Seralize the pools
     pools = rows2namedtuples("Pool", pool_dict)
-
     # Fetch the atomic pairs based on the filter
     atm_dict = fetch_data(atomic_path, fltr=fltr)
     # In pools replace pool strings with pool objects

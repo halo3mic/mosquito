@@ -5,87 +5,51 @@ from src.exchanges import Uniswap, SushiSwap
 from arbbot import optimal_amount
 import src.config as cf
 
-from pprint import pprint
 
+def check4prof(atm_opp):
+    pool1, pool2 = atm_opp.pool1, atm_opp.pool2
+    exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3)}
+    ex1 = exchanges[pool1.exchange]
+    ex2 = exchanges[pool2.exchange]
+    *reserve_pool1, _ = ex1.get_reserves(pool1.address)
+    *reserve_pool2, _ = ex2.get_reserves(pool2.address)
+    reserve_pool1_tkn1 = reserve_pool1[atm_opp.tkn1]/10**(pool1.tokens[atm_opp.tkn1].decimal)
+    reserve_pool1_tkn2 = reserve_pool1[atm_opp.tkn2]/10**(pool1.tokens[atm_opp.tkn2].decimal)
+    reserve_pool2_tkn1 = reserve_pool2[atm_opp.tkn1]/10**(pool2.tokens[atm_opp.tkn1].decimal) 
+    reserve_pool2_tkn2 = reserve_pool2[atm_opp.tkn2]/10**(pool2.tokens[atm_opp.tkn2].decimal) 
 
-def timeit(fun):
-    def _wrapper(*args):
-        t0 = time.time()
-        response = fun(*args)
-        tdiff = time.time()-t0
-        print(f"Runtime: {tdiff:.2f}s")
-        return response
-    return _wrapper
-
-
-def check4prof(ex1, ex2, pool1, pool2, fee1=0.003, fee2=0.003):
-    ss_reserve_tkn1, ss_reserve_tkn2, _ =  ex1.get_reserves(pool1)
-    uni_reserve_tkn1, uni_reserve_tkn2, _ = ex2.get_reserves(pool2) 
-    params = {"reserveOfToken1InPool1": uni_reserve_tkn2 / 10**18, 
-            "reserveOfToken2InPool1": uni_reserve_tkn1 / 10**18, 
-            "reserveOfToken1InPool2": ss_reserve_tkn2 / 10**18, 
-            "reserveOfToken2InPool2": ss_reserve_tkn1 / 10**18, 
-            "feeInPool1": 0.003,
-            "feeInPool2": 0.003
-            }
-    # print(params)
+    params = {"reserveOfToken1InPool1": reserve_pool1_tkn2, 
+              "reserveOfToken2InPool1": reserve_pool1_tkn1, 
+              "reserveOfToken1InPool2": reserve_pool2_tkn2, 
+              "reserveOfToken2InPool2": reserve_pool2_tkn1, 
+              "feeInPool1": pool1.fee,
+              "feeInPool2": pool2.fee
+             }
     result1 = optimal_amount.run(params)
     result2 = optimal_amount.run(params, reverse=1)
-    return result1, result2
+    return atm_opp.symbol, (result1, result2)
 
 
-def async_check4prof(ex1, ex2):
-    def _wrapper(pair):
-        pool1 = cf.address(pair[0])
-        pool2 = cf.address(pair[1])
-        opp_str = f"{pair[0]}|{pair[1]}"
-        return opp_str, check4prof(ex1, ex2, pool1, pool2)
-    return _wrapper
-
-
-@timeit
-def main_sync(w3, pools):
-    ss = SushiSwap(w3)
-    uni = Uniswap(w3)
-    responses = []
-    for pool_pair in pools:
-        pool1 = cf.address(pool_pair[0])
-        pool2 = cf.address(pool_pair[1])
-        response = check4prof(ss, uni, pool1, pool2)
-        responses.append(response)
-    return responses
-
-
-@timeit
-def main_async(w3):
-    ss = SushiSwap(w3)
-    uni = Uniswap(w3)
-    pools = [("ss_wbtcweth", "uni_wbtcweth"), 
-             ("ss_linkweth", "uni_linkweth"),
-             ("ss_daiweth", "uni_daiweth"),
-             ("ss_sushiweth", "uni_sushiweth"),
-             ("ss_yfiweth", "uni_yfiweth"),
-             ("ss_kp3rweth", "uni_kp3rweth"),
-             ("ss_snxweth", "uni_snxweth"),
-             ("ss_bandweth", "uni_bandweth"),
-             ("ss_amplweth", "uni_amplweth"),
-             ]
-    fun = async_check4prof(ss, uni)
+def main_async(w3, atm_opps):
     with ThreadPoolExecutor() as executor:
-        responses = executor.map(fun, pools)
-
+        responses = executor.map(check4prof, atm_opps)
     return responses
 
 
 if __name__ == "__main__":
-    provider_name = "chainStackBlocklytics"
+    from arbbot.dt_manager import get_atm_opps
+    from pprint import pprint
+    import time
+
+    t0 = time.time()
+    provider_name = "quickNode"
     w3 = cf.web3_api_session(provider_name)
-    rs = main_async(w3)
+    atm_opps = get_atm_opps()
+    rs = main_async(w3, atm_opps)
     for r in rs:
         pprint(r)
-    
-# print(f"SushiSwap reserves: \n\twBTC: {ss_reserve_wbtc}\n\twETH: {ss_reserve_weth}")
-# print(f"Uniswap reserves: \n\twBTC: {uni_reserve_wbtc}\n\twETH: {uni_reserve_weth}")
-# pprint(result)
+
+    print(f"Runtime: {time.time()-t0:.2f}s")
+
 
 

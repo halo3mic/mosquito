@@ -3,6 +3,7 @@ import time
 import atexit
 import codecs
 import requests
+from math import floor, log10
 
 
 def approve_erc20(token_address, spender, amount=-1):
@@ -86,5 +87,12 @@ def send2archer(byteload):
     r = requests.post(cf.archer_api_endpoint, payload)
     print(r)
     return r
+
+
+def round_sig(x, sig=4):
+    """Return value rounded to specified significant figure"""
+    rounded = round(x, sig - floor(log10(abs(x))) - 1)
+    rounded = int(rounded) if float(rounded).is_integer() else rounded  # 1.0 --> 1
+    return rounded
 
 
