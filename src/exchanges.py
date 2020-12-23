@@ -3,8 +3,6 @@ import src.config as cf
 
 class Uniswap:
 
-    fee = 0.003
-
     def __init__(self, web3):
         self.web3 = web3
         self.fee = 0.003
@@ -38,12 +36,13 @@ class Uniswap:
 
 class SushiSwap:
 
-    fee = 0.003
-
     def __init__(self, web3):
         self.web3 = web3
 
     def get_reserves(self, pool_address):
+        import time
+        t0 = time.time()
         pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2"))
+        print(f"Time for call execution: {time.time()-t0}")
         bal0, bal1, last_update = pool_contract.functions.getReserves().call()
         return bal0, bal1, last_update

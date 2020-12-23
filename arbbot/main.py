@@ -28,7 +28,7 @@ class ArbBot:
     def __call__(self, block_number, timestamp):
         print("...")
         self.last_timestamp = time.time()
-        responses = self.calculate_async(self.web3)
+        responses = self.calculate()
         profitables = self.response_manager(responses)
         print("***")
         if profitables:
@@ -57,17 +57,46 @@ class ArbBot:
     def sum_profits(opps):
         return sum(opp["profit"] for opp in opps)
 
-    def fetch_reserves(self, atm_opp):
-        pool1, pool2 = atm_opp.pool1, atm_opp.pool2
-        ex1 = self.exchanges[pool1.exchange]
-        ex2 = self.exchanges[pool2.exchange]
+    def calculate(self):
 
-        *reserve_pool1, _ = ex1.get_reserves(pool1.address)
-        *reserve_pool2, _ = ex2.get_reserves(pool2.address)
-        reserve_pool1_tkn1 = reserve_pool1[atm_opp.tkn1]/10**(pool1.tokens[atm_opp.tkn1].decimal)
-        reserve_pool1_tkn2 = reserve_pool1[atm_opp.tkn2]/10**(pool1.tokens[atm_opp.tkn2].decimal)
-        reserve_pool2_tkn1 = reserve_pool2[atm_opp.tkn1]/10**(pool2.tokens[atm_opp.tkn1].decimal) 
-        reserve_pool2_tkn2 = reserve_pool2[atm_opp.tkn2]/10**(pool2.tokens[atm_opp.tkn2].decimal)
+        def get_pool_reserve(pool):
+            ex = self.exchanges[pool.exchange]
+            *rs, _ = ex.get_reserves(pool.address)
+            return rs
+        
+        atm_opps = self.atm_opps
+        all_pools = (pool for opp in atm_opps for pool in (opp.pool1, opp.pool2))
+        results = []
+        t0 = time.time()
+        thread_count = len(atm_opps)*2
+        with ThreadPoolExecutor(max_workers=thread_count) as executor:
+            print(f"Thread Pool created time: {time.time()-t0}")
+            responses = executor.map(get_pool_reserve, all_pools)
+
+        t99 = time.time()
+        pool_pairs = ((r,next(responses)) for r in responses)
+        for i, pair in enumerate(pool_pairs):
+            atm_opp = atm_opps[i]
+            p1, p2 = pair
+            r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = self.manage_reserves(atm_opp, p1, p2)
+            params = {"reserveOfToken1InPool1": r_p1_t2, 
+                    "reserveOfToken2InPool1": r_p1_t1, 
+                    "reserveOfToken1InPool2": r_p2_t2, 
+                    "reserveOfToken2InPool2": r_p2_t1, 
+                    "feeInPool1": atm_opp.pool1.fee,
+                    "feeInPool2": atm_opp.pool2.fee
+                    }
+            optimal_amount = self.calculate_optimized(params)
+            results.append((atm_opp.symbol, optimal_amount))
+        print(f"Calculation time: {time.time()-t99}")
+        return results
+
+    def manage_reserves(self, atm_opp, reserves_pool1, reserves_pool2):
+        pool1, pool2 = atm_opp.pool1, atm_opp.pool2
+        reserve_pool1_tkn1 = reserves_pool1[atm_opp.tkn1]/10**(pool1.tokens[atm_opp.tkn1].decimal)
+        reserve_pool1_tkn2 = reserves_pool1[atm_opp.tkn2]/10**(pool1.tokens[atm_opp.tkn2].decimal)
+        reserve_pool2_tkn1 = reserves_pool2[atm_opp.tkn1]/10**(pool2.tokens[atm_opp.tkn1].decimal) 
+        reserve_pool2_tkn2 = reserves_pool2[atm_opp.tkn2]/10**(pool2.tokens[atm_opp.tkn2].decimal)
 
         return reserve_pool1_tkn1, reserve_pool1_tkn2, reserve_pool2_tkn1, reserve_pool2_tkn2
 
@@ -77,27 +106,6 @@ class ArbBot:
         result2 = optimal_amount.run(params, reverse=1)
 
         return result1, result2
-
-    def check4prof(self, atm_opp):
-        t0 = time.time()
-        r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = self.fetch_reserves(atm_opp)
-        t1 = time.time()
-        print(f"Fetching reserves took: {t1-t0:.2f}")
-        params = {"reserveOfToken1InPool1": r_p1_t2, 
-                "reserveOfToken2InPool1": r_p1_t1, 
-                "reserveOfToken1InPool2": r_p2_t2, 
-                "reserveOfToken2InPool2": r_p2_t1, 
-                "feeInPool1": atm_opp.pool1.fee,
-                "feeInPool2": atm_opp.pool2.fee
-                }
-        optimimal_amount = self.calculate_optimized(params)
-
-        return atm_opp.symbol, optimimal_amount
-
-    def calculate_async(self, atm_opps):
-        with ThreadPoolExecutor() as executor:
-            responses = executor.map(self.check4prof, self.atm_opps)
-        return responses
 
     def save_logs(self, data, block_number):
         columns = ["block"] + list(data[0].keys())
@@ -115,10 +123,14 @@ class ArbBot:
 
 
 if __name__ == "__main__":
-    provider_name = "alchemy"
+    provider_name = "chainStackBlocklytics"
     provider = cf.provider(provider_name)
     w3 = cf.web3_api_session(provider_name)
     bot = ArbBot(w3)
+    t0 = time.time()
+    r = bot.calculate()
+    print(f"Runtime: {time.time()-t0}")
+    pprint(r)
     # run_block_listener(provider, bot)
 
 
