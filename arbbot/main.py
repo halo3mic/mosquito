@@ -30,12 +30,12 @@ class ArbBot:
         self.last_timestamp = time.time()
         responses = self.calculate_async(self.web3)
         profitables = self.response_manager(responses)
-        print("***")
         if profitables:
             pprint(profitables)
-            self.save_logs(profitables, block_number)
+            self.save_logs(profitables, block_number, timestamp)
             total_profit = self.sum_profits(profitables)
-            return total_profit
+            return {"profit": total_profit, "byteload": "", "status": 1}
+        return {"profit": 0, "byteload": "", "status": 0}
 
     def __str__(self):
         return "ArbBot"
@@ -79,10 +79,7 @@ class ArbBot:
         return result1, result2
 
     def check4prof(self, atm_opp):
-        t0 = time.time()
         r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = self.fetch_reserves(atm_opp)
-        t1 = time.time()
-        print(f"Fetching reserves took: {t1-t0:.2f}")
         params = {"reserveOfToken1InPool1": r_p1_t2, 
                 "reserveOfToken2InPool1": r_p1_t1, 
                 "reserveOfToken1InPool2": r_p2_t2, 
@@ -90,21 +87,24 @@ class ArbBot:
                 "feeInPool1": atm_opp.pool1.fee,
                 "feeInPool2": atm_opp.pool2.fee
                 }
-        optimimal_amount = self.calculate_optimized(params)
+        optimal_amount = self.calculate_optimized(params)
 
-        return atm_opp.symbol, optimimal_amount
+        return atm_opp.symbol, optimal_amount
 
     def calculate_async(self, atm_opps):
         with ThreadPoolExecutor() as executor:
             responses = executor.map(self.check4prof, self.atm_opps)
         return responses
 
-    def save_logs(self, data, block_number):
-        columns = ["block"] + list(data[0].keys())
+    def save_logs(self, data, block_number, timestamp):
+        time_now = int(time.time())
+        run_data = {"block_number": block_number, "blockTimestamp": timestamp, "finishTimestamp": time_now}
+        columns = list(run_data.keys()) + list(data[0].keys())
         with open(self.save_logs_path, "a") as stats_file:
             writer = csv.DictWriter(stats_file, fieldnames=columns)
             for row in data:
-                writer.writerow(row)
+                full_row = {**row, **run_data}
+                writer.writerow(full_row)
 
     def import_state(self, data):
         for key, value in data.items():
@@ -115,7 +115,7 @@ class ArbBot:
 
 
 if __name__ == "__main__":
-    provider_name = "alchemy"
+    provider_name = "chainStackBlocklytics"
     provider = cf.provider(provider_name)
     w3 = cf.web3_api_session(provider_name)
     bot = ArbBot(w3)

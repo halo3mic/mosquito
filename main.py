@@ -1,9 +1,8 @@
-from src.dev_main import Listener
-from src.opportunities import EmptySet
+from src.listener import Listener
+from arbbot.main import ArbBot
 
 
-avl_opps = [EmptySet]
+avl_opps = [ArbBot]
 provider_name = "chainStackBlocklytics"
 listener = Listener(provider_name, avl_opps)
-# listener.run_time_listener()
 listener.run_block_listener()

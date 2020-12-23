@@ -41,10 +41,11 @@ class OpportunityManager:
                      "receivingTime": int(recv_tm), 
                      "oppProcessingTime": processing_time_opp, 
                      "wholeProcessingTime": processing_time_all,
-                     "opportunityFound": bool(opp_response), 
+                     "opportunityFound": opp_response["status"], 
                      "providerName": self.provider.name, 
                      "opportunity": str(opp), 
-                     "byteload": opp_response
+                     "byteload": opp_response["byteload"], 
+                     "profit": opp_response["profit"]
                      }
             if self.save_logs:
                 save_logs(stats, cf.save_logs_path)
@@ -54,7 +55,7 @@ class OpportunityManager:
             stdout_str += f"\nLatency: {recv_tm-timestamp:.2f} sec"
         if self.print_logs:
             stdout_str += "\n"+"_"*80
-            # os.system("clear")
+            os.system("clear")
             print(stdout_str)
 
         return state
@@ -83,7 +84,7 @@ class Listener:
         q = Queue()
         q.put({})
         async def _start_listening():
-            async with websockets.connect(self.provider.ws_path) as websocket:
+            async with websockets.connect(self.provider.ws_path, ping_interval=None) as websocket:
                 await websocket.send(self.provider.ws_blocks_request)
                 await websocket.recv()
                 future_event = None
