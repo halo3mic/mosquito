@@ -27,13 +27,10 @@ class OpportunityManager:
 
     def process_opps(self, block_number, timestamp, state, recv_tm):
         stdout_str = f"  BLOCK NUMBER: {block_number}  ".center(80, "#")   
-        print("starting with processing")
         for opp in self.opps:
             opp.import_state(state.get(str(opp), {}))  # Load previus state of the opportunity
             t0 = time.time()
-            print("start w arbbot")
             opp_response = opp(block_number, timestamp)
-            print("end w arbbot")
             t1 = time.time()
             state[str(opp)] = opp.export_state()  # Save current state 
             processing_time_opp = t1 - t0
@@ -76,13 +73,11 @@ class Listener:
         return block, timestamp
 
     def action(self, raw_header, queue, recv_tm):
-        print("new action")
         block_number, timestamp = self.header_handler(raw_header)
-        print("end with header handler")
-        last_state = queue.get()
-        print("start with manager")
+        # last_state = queue.get()
+        last_state = {}
         new_state = self.opportunity_manager.process_opps(block_number, timestamp, last_state, recv_tm)
-        queue.put(new_state)
+        # queue.put(new_state)
 
     def run_block_listener(self):
         q = Queue()
@@ -95,7 +90,6 @@ class Listener:
                 while 1:
                     header = await websocket.recv()
                     recv_tm = time.time()
-                    print("new block")
                     if future_event: 
                         future_event.kill()
                     future_event = Process(target=self.action, args=(header, q, recv_tm))
