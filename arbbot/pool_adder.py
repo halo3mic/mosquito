@@ -85,14 +85,14 @@ class PoolAdder:
         return self.query_chain.query_unisus_pool(address)  # Replace this later for general one
 
     def _save_pool(self, info):
-        save_path = "./config/pools_test.csv"  # Later change this to real path
+        save_path = self.pools_path
         df = self.pools.append(info, ignore_index=True)
         df.to_csv(save_path)
 
         msg = "New pool saved"
         print(msg.center(70, "*"))
         pprint(info)
-        print("*"*(70+len(msg)))
+        print("*"*70)
 
     def _get_token_id_and_symbol(self, address):
         # Check if token already exists
@@ -114,14 +114,14 @@ class PoolAdder:
         return self.query_chain.query_token(address)
 
     def _save_token(self, info):
-        save_path = "./config/tokens_test.csv"  # Later change this to real path
+        save_path = self.tokens_path
         df = self.tokens.append(info, ignore_index=True)
         df.to_csv(save_path)
 
         msg = "New token saved"
         print(msg.center(70, "*"))
         pprint(info)
-        print("*"*(70+len(msg)))
+        print("*"*70)
 
 
 def main(pool_address, provider, pools_path, tokens_path, exchange=None):
@@ -132,8 +132,8 @@ def main(pool_address, provider, pools_path, tokens_path, exchange=None):
 def interactive():
     pool_address = sys.argv[1]
     provider_name = "chainStackAsia"
-    pools_path = "./config/pools.csv"
-    tokens_path = "./config/tokens.csv"
+    pools_path = "./config/pools_test.csv"
+    tokens_path = "./config/tokens_test.csv"
     main(pool_address, provider_name, pools_path, tokens_path)
 
 

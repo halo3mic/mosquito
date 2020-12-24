@@ -1,4 +1,3 @@
-from arbbot.opp_checker import main_async
 from arbbot.dt_manager import get_atm_opps
 from arbbot import optimal_amount
 import src.config as cf
