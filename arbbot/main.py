@@ -8,7 +8,7 @@ from src.exchanges import Uniswap, SushiSwap
 from concurrent.futures import ThreadPoolExecutor
 import csv
 import websockets
-from multiprocessing import Process, Queue
+from multiprocessing import Process
 import asyncio
 import time
 import json
@@ -33,8 +33,8 @@ class ArbBot:
         if profitables:
             pprint(profitables)
             self.save_logs(profitables, block_number, timestamp)
-            total_profit = self.sum_profits(profitables)
-            return {"profit": total_profit, "byteload": "", "status": 1}
+            max_profit = self.best_profit(profitables)
+            return {"profit": max_profit, "byteload": "", "status": 1}
         return {"profit": 0, "byteload": "", "status": 0}
 
     def __str__(self):
@@ -46,16 +46,16 @@ class ArbBot:
             name, results = r
             if results[0]["arb_available"]:
                 profit = results[0]["estimated_output_amount"] - results[0]["optimal_input_amount"]
-                profitable_opps.append({"name": name+"_o", "profit": round_sig(profit)})
+                profitable_opps.append({"name": name+"_o", "profit": round_sig(profit), "inputAmount": round_sig(results[0]["optimal_input_amount"])})
             if results[1]["arb_available"]:
                 profit = results[1]["estimated_output_amount"] - results[1]["optimal_input_amount"]
-                profitable_opps.append({"name": name+"_r", "profit": round_sig(profit)})
+                profitable_opps.append({"name": name+"_r", "profit": round_sig(profit), "inputAmount": round_sig(results[1]["optimal_input_amount"])})
 
         return profitable_opps
     
     @staticmethod
-    def sum_profits(opps):
-        return sum(opp["profit"] for opp in opps)
+    def best_profit(opps):
+        return max(opp["profit"] for opp in opps)
 
     def fetch_reserves(self, atm_opp):
         pool1, pool2 = atm_opp.pool1, atm_opp.pool2
