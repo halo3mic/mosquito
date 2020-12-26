@@ -3,6 +3,7 @@ from arbbot import optimal_amount
 import src.config as cf
 from src.helpers import round_sig
 from src.exchanges import Uniswap, SushiSwap
+from src.gas_manager import fetch_gas_price
 
 from concurrent.futures import ThreadPoolExecutor
 import csv
@@ -23,12 +24,15 @@ class ArbBot:
         self.web3 = w3
         self.atm_opps = get_atm_opps(select=selection)
         self.exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3)}
+        self.gas_price = 10**9  # Default is huge gas
+        self.gas_amount = 260000  # Associate this with the instruction
 
     def __call__(self, block_number, timestamp):
         print("...")
         self.last_timestamp = time.time()
-        responses = self.calculate_async(self.web3)
+        responses = self.run_async(self.web3)
         profitables = self.response_manager(responses)
+        print(f"Gas price: {self.gas_price/10**9} gwei")
         if profitables:
             pprint(profitables)
             self.save_logs(profitables, block_number, timestamp)
@@ -43,12 +47,18 @@ class ArbBot:
         profitable_opps = []
         for r in responses:
             name, results = r
+            profit = 0
             if results[0]["arb_available"]:
                 profit = results[0]["estimated_output_amount"] - results[0]["optimal_input_amount"]
-                profitable_opps.append({"name": name+"_o", "profit": round_sig(profit), "inputAmount": round_sig(results[0]["optimal_input_amount"])})
+                name = name+"_o" 
             if results[1]["arb_available"]:
                 profit = results[1]["estimated_output_amount"] - results[1]["optimal_input_amount"]
-                profitable_opps.append({"name": name+"_r", "profit": round_sig(profit), "inputAmount": round_sig(results[1]["optimal_input_amount"])})
+                name =  name+"_r"
+            gas_cost = self.gas_price * self.gas_amount / 10**18
+            print(gas_cost)
+            profit -= gas_cost
+            if profit > 0:
+                profitable_opps.append({"name": name+"_r", "profit": round_sig(profit), "inputAmount": round_sig(results[1]["optimal_input_amount"]), "gas_cost": gas_cost})
 
         return profitable_opps
     
@@ -90,9 +100,11 @@ class ArbBot:
 
         return atm_opp.symbol, optimal_amount
 
-    def calculate_async(self, atm_opps):
+    def run_async(self, atm_opps):
         with ThreadPoolExecutor() as executor:
             responses = executor.map(self.check4prof, self.atm_opps)
+            gas_price = executor.submit(self.get_gas_price)
+        self.gas_price = gas_price.result()
         return responses
 
     def save_logs(self, data, block_number, timestamp):
@@ -112,12 +124,19 @@ class ArbBot:
     def export_state(self):
         return {"amt_opps": self.atm_opps, "exchanges": self.exchanges}
 
+    @staticmethod
+    def get_gas_price():
+        r = fetch_gas_price()
+        rapid_gas = r["rapid"]
+        return rapid_gas
 
 if __name__ == "__main__":
     provider_name = "chainStackBlocklytics"
     provider = cf.provider(provider_name)
     w3 = cf.web3_api_session(provider_name)
     bot = ArbBot(w3)
+    r = bot(1, 1)
+    pprint(r)
     # run_block_listener(provider, bot)
 
 
