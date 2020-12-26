@@ -91,7 +91,7 @@ if __name__ == "__main__":
             "feeInPool1": 0.003,
             "feeInPool2": 0.001
             }
-    result = main(data)
+    result = run(data)
 
     print(result)
 
