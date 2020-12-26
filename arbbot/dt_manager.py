@@ -26,7 +26,7 @@ def fetch_data(path, fltr=None):
 def deserialize(fltr=None):
     tkns_path = "./config/tokens.csv"
     pools_path = "./config/pools.csv"
-    atomic_path = "./config/atomic_opps.csv"
+    instr_path = "./config/instructions.csv"
     # Fetch and seralize all the tokens
     tkn_dict = fetch_data(tkns_path)
     tkns = rows2namedtuples("Token", tkn_dict)
@@ -34,25 +34,29 @@ def deserialize(fltr=None):
     pool_dict = fetch_data(pools_path)
     # In pools replace token strings with token objects
     for i in range(len(pool_dict["id"])):
-        pool_tkn_ids = pool_dict["tokens"][i].split(", ")
-        pool_dict["tokens"][i] = [tkns[tkn_id] for tkn_id in pool_tkn_ids]
+        pool_dict["tokens"][i] = pool_dict["tokens"][i].split(", ")
+        
     # Seralize the pools
     pools = rows2namedtuples("Pool", pool_dict)
     # Fetch the atomic pairs based on the filter
-    atm_dict = fetch_data(atomic_path, fltr=fltr)
+    instr_dict = fetch_data(instr_path, fltr=fltr)
     # In pools replace pool strings with pool objects
-    for k in atm_dict["id"].keys():
-        atm_dict["pool1"][k] = pools[atm_dict["pool1"][k]]
-        atm_dict["pool2"][k] = pools[atm_dict["pool2"][k]]
-    atm_opps = rows2namedtuples("AtmOpp", atm_dict)
+    for k in instr_dict["id"].keys():
+        if not instr_dict["enabled"][k]:
+            continue
+        instr_dict["pool1"][k] = pools[instr_dict["pool1"][k]]
+        instr_dict["pool2"][k] = pools[instr_dict["pool2"][k]]
+        path_list = instr_dict["path"][k].split(", ")
+        instr_dict["path"][k] = tuple(tkns[tkn_id] for tkn_id in path_list)
+    instructions = rows2namedtuples("Instruction", instr_dict)
 
-    return atm_opps
+    return instructions
 
 
-def get_atm_opps(select=None):
+def get_instructions(select=None):
     selection = {"symbol": select} if select else None
-    atm_opps = deserialize(fltr=selection)
-    formatted = list(atm_opps.values())
+    instructions = deserialize(fltr=selection)
+    formatted = list(instructions.values())
     return formatted
 
 
@@ -63,4 +67,4 @@ if __name__ == "__main__":
     # dic = fetch_data("./config/tokens.csv")
     # dics = [{key : value[i] for key, value in dic.items()} for i in range(len(dic["id"]))] 
     # instances = rows2namedtuples("Test", dic)
-    pprint(get_atm_opps(select=["amplweth_ssuni"]))
+    pprint(get_instructions(select=["weth2wbtc2weth_uniswap2Sushiswap", "weth2snx2weth_uniswap2Sushiswap"]))

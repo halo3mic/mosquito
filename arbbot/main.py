@@ -1,4 +1,4 @@
-from arbbot.dt_manager import get_atm_opps
+from arbbot.dt_manager import get_instructions
 from arbbot import optimal_amount
 import src.config as cf
 from src.helpers import round_sig
@@ -22,7 +22,7 @@ class ArbBot:
 
     def __init__(self, w3, selection=None):
         self.web3 = w3
-        self.atm_opps = get_atm_opps(select=selection)
+        self.instr = get_instructions(select=selection)
         self.exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3)}
         self.gas_price = 10**9  # Default is huge gas
         self.gas_amount = 260000  # Associate this with the instruction
@@ -33,9 +33,9 @@ class ArbBot:
         responses = self.run_async(self.web3)
         profitables = self.response_manager(responses)
         print(f"Gas price: {self.gas_price/10**9} gwei")
+        self.save_logs(profitables, block_number, timestamp)  # Save the logs even if not profitable
         if profitables:
             pprint(profitables)
-            self.save_logs(profitables, block_number, timestamp)
             max_profit = self.best_profit(profitables)
             return {"profit": max_profit, "byteload": "", "status": 1}
         return {"profit": 0, "byteload": "", "status": 0}
@@ -87,14 +87,14 @@ class ArbBot:
 
         return result1, result2
 
-    def check4prof(self, atm_opp):
-        r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = self.fetch_reserves(atm_opp)
+    def check4prof(self, instr):
+        r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = self.fetch_reserves(instr)
         params = {"reserveOfToken1InPool1": r_p1_t2, 
                 "reserveOfToken2InPool1": r_p1_t1, 
                 "reserveOfToken1InPool2": r_p2_t2, 
                 "reserveOfToken2InPool2": r_p2_t1, 
-                "feeInPool1": atm_opp.pool1.fee,
-                "feeInPool2": atm_opp.pool2.fee
+                "feeInPool1": instr.pool1.fee,
+                "feeInPool2": instr.pool2.fee
                 }
         optimal_amount = self.calculate_optimized(params)
 
@@ -102,7 +102,7 @@ class ArbBot:
 
     def run_async(self, atm_opps):
         with ThreadPoolExecutor() as executor:
-            responses = executor.map(self.check4prof, self.atm_opps)
+            responses = executor.map(self.check4prof, self.instr)
             gas_price = executor.submit(self.get_gas_price)
         self.gas_price = gas_price.result()
         return responses
