@@ -53,8 +53,8 @@ class ArbBot:
             r["gross_profit"] = round_sig(r["gross_profit"])
             r["input_amount"] = round_sig(r["input_amount"])
             r["gas_cost"] = round_sig(r["gas_cost"])
-            r["finish_time"] = time.time()
             r["start_time"] = self.start_time
+            r["end_time"] = time.time()
             formatted_opps.append(r)
 
         return formatted_opps
@@ -67,10 +67,10 @@ class ArbBot:
     @staticmethod
     def calculate_optimized(reserves, fee1, fee2):
         r_p1_t1, r_p1_t2, r_p2_t1, r_p2_t2 = reserves
-        params = {"reserveOfToken1InPool1": r_p1_t2, 
-                "reserveOfToken2InPool1": r_p1_t1, 
-                "reserveOfToken1InPool2": r_p2_t2, 
-                "reserveOfToken2InPool2": r_p2_t1, 
+        params = {"reserveOfToken1InPool1": r_p1_t1, 
+                "reserveOfToken2InPool1": r_p1_t2, 
+                "reserveOfToken1InPool2": r_p2_t1, 
+                "reserveOfToken2InPool2": r_p2_t2, 
                 "feeInPool1": fee1,
                 "feeInPool2": fee2
                 }
@@ -130,8 +130,7 @@ class ArbBot:
         return opps
 
     def save_logs(self, data, block_number, timestamp):
-        time_now = int(time.time())
-        run_data = {"block_number": block_number, "blockTimestamp": timestamp, "finishTimestamp": time_now}
+        run_data = {"block_number": block_number, "blockTimestamp": timestamp}
         columns = list(run_data.keys()) + list(data[0].keys())
         with open(self.save_logs_path, "a") as stats_file:
             writer = csv.DictWriter(stats_file, fieldnames=columns)

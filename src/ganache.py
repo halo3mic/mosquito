@@ -30,7 +30,8 @@ class Ganache:
                         "--callGasLimit", "0x493E0", 
                         "-f", self.provider+self.provider_suffix, 
                         f"-p {self.port}", 
-                        "-v"]
+                        "-v", 
+                        "-e 2000"]
         print("Starting ganache ...")
         try:
             process = subprocess.Popen(process_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

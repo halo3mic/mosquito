@@ -31,6 +31,13 @@ def balance_erc20(w3, holder_address, token_address):
     return balance / 10**decimals
 
 
+def erc20_approved(w3, tkn_address, owner, spender):
+    tkn_contract = w3.eth.contract(address=tkn_address, abi=cf.abi("erc20_token"))
+    decimals = tkn_contract.functions.decimals().call()
+    allowed = tkn_contract.functions.allowance(owner, spender).call()
+    return allowed / 10**decimals
+
+
 def payload2bytes(payload):
     def str2hex(text):
         return codecs.encode(text.encode(), "hex").decode()
@@ -67,15 +74,18 @@ def payload2bytes(payload):
     return byteload
 
 
-def execute_payload(w3, payload, wallet_address):
-    # gas_price = w3.eth.gasPrice
+def execute_payload(w3, payload, wallet_address, gas_price=None):
+    gas_price = w3.eth.gasPrice if not gas_price else gas_price
     # nonce = w3.eth.getTransactionCount(wallet_address)
     # Add option to sign the tx
     tx = {
           "gasLimit": payload["gasLimit"],
           "from": wallet_address,
           "to": payload["contractAddress"],
-          "data": payload["calldata"]}
+          "data": payload["calldata"], 
+          "value": payload.get("value", 0), 
+          "gasPrice": gas_price *10**9
+          }
     tx_hash = w3.eth.sendTransaction(tx).hex()
     
     return tx_hash  

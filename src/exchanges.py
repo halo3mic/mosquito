@@ -7,7 +7,8 @@ class Uniswap:
 
     def __init__(self, web3):
         self.web3 = web3
-        self.fee = 0.003
+        self.router_address = cf.address("uniswapv2_router")
+        self.router_contract = web3.eth.contract(address=self.router_address, abi=cf.abi("uniswapv2_router"))
         
     def get_amount_out(self, input_amount, pool_address, inverse=False):
         bal0, bal1, _ = self.get_reserves(pool_address)
@@ -16,34 +17,40 @@ class Uniswap:
         
         return amount_out
 
-    def swapExactTokensForETH(self, input_amount, amount_out, path, gas_limit, to_address, tkn_slippage=0.01, time_slippage=300):
-        router_address = cf.address("uniswapv2_router02")
-        router_contract = self.web3.eth.contract(address=router_address, abi=cf.abi("uniswapv2_router02"))
+    def swapExactTokensForETH(self, input_amount, amount_out_min, path, to_address, last_block_timestamp, gas_limit=200000, tkn_slippage=0.01, time_slippage=300):
         function = "swapExactTokensForETH"
-        timestamp = self.web3.eth.getBlock('latest')["timestamp"]
-        args = [int(input_amount), int(amount_out*(1-tkn_slippage)), path, to_address, timestamp+time_slippage]
-        calldata = router_contract.encodeABI(fn_name=function, args=args)
-        payload = {"contractAddress": router_address, 
+        args = [int(input_amount), int(amount_out_min*(1-tkn_slippage)), path, to_address, last_block_timestamp+time_slippage]
+        calldata = self.router_contract.encodeABI(fn_name=function, args=args)
+        payload = {"contractAddress": self.router_address, 
                    "calldata": calldata,
                    "gasLimit": gas_limit
                   }
 
         return payload
 
+    def swapExactETHForTokens(self, amount_in, amount_out_min, path, to_address, last_block_timestamp, gas_limit=200000, tkn_slippage=0.01, time_slippage=300): 
+        function = "swapExactETHForTokens"
+        args = [int(amount_out_min*(1-tkn_slippage)), path, to_address, last_block_timestamp+time_slippage]
+        calldata = self.router_contract.encodeABI(fn_name=function, args=args)
+        payload = {"contractAddress": self.router_address, 
+                   "calldata": calldata,
+                   "gasLimit": gas_limit, 
+                   "value": int(amount_in)
+                  }
+
+        return payload
+
     def get_reserves(self, pool_address):
-        pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2"))
+        pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2_pool"))
         bal0, bal1, last_update = pool_contract.functions.getReserves().call()
         return bal0, bal1, last_update
 
 
-class SushiSwap:
+class SushiSwap(Uniswap):
 
     fee = 0.003
 
     def __init__(self, web3):
         self.web3 = web3
-
-    def get_reserves(self, pool_address):
-        pool_contract = self.web3.eth.contract(address=pool_address, abi=cf.abi("uniswapv2"))
-        bal0, bal1, last_update = pool_contract.functions.getReserves().call()
-        return bal0, bal1, last_update
+        self.router_address = cf.address("sushiswap_router")
+        self.router_contract = web3.eth.contract(address=self.router_address, abi=cf.abi("uniswapv2_router"))

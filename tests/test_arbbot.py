@@ -41,12 +41,11 @@ def test_run():
     provider_name = "chainStackBlocklytics"
     w3 = cf.web3_api_session(provider_name)
     bot = ArbBot(w3)
-    # selection = ["weth2wbtc2weth_uniswap2Sushiswap", 
-    #              "weth2snx2weth_uniswap2Sushiswap", 
-    #              "weth2wbtc2weth_sushiswap2Uniswap"]
+    selection = ["weth2band2weth_uniswap2Sushiswap", ]
     selection = None
     instructions = get_instructions(select=selection)
     bot.instr = instructions
+    bot.gas_price = 42*10**9
     r = bot.run()
     pprint(r)
 
@@ -66,5 +65,6 @@ def test_call():
 if __name__ == "__main__":
     t0 = time.time()
     # test_fetch_reserves()
-    test_call()
+    # test_run()
+    pprint(get_instructions())
     print(time.time()-t0)
