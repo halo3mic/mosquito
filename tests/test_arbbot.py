@@ -62,9 +62,32 @@ def test_call():
     response = bot(1, 1)
     pprint(response)
 
+
+def test_form_bytecode():
+    provider_name = "chainStackBlocklytics"
+    w3 = cf.web3_api_session(provider_name)
+    bot = ArbBot(w3)
+    opp = {
+            "instrId": "I0001", 
+            "instrSymbol": "weth2wbtc2weth_uniswap2Sushiswap", 
+            "optimalAmount": 3.5, 
+            "grossProfit": 0.25, 
+            "netProfit": 0.1, 
+            "gasCost": 0.15, 
+            "gasAmount": 260000
+            }
+    block_timestamp = 0
+    bytecode = bot.form_bytecode(opp, block_timestamp)
+
+    return bytecode
+
+
 if __name__ == "__main__":
     t0 = time.time()
     # test_fetch_reserves()
     # test_run()
-    pprint(get_instructions())
-    print(time.time()-t0)
+    # pprint(get_instructions())
+    test_form_bytecode()
+    print(f"Runtime: {time.time()-t0} sec")
+
+

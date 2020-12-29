@@ -24,11 +24,13 @@ def transfer_erc20(token_address, reciver, amount):
     return payload
 
 
-def balance_erc20(w3, holder_address, token_address):
+def balance_erc20(w3, holder_address, token_address, convert=False):
     tkn_contract = w3.eth.contract(address=token_address, abi=cf.abi("erc20_token"))
-    decimals = tkn_contract.functions.decimals().call()
     balance = tkn_contract.functions.balanceOf(holder_address).call()
-    return balance / 10**decimals
+    if convert:
+        decimals = tkn_contract.functions.decimals().call()
+        balance /= 10**decimals
+    return balance
 
 
 def erc20_approved(w3, tkn_address, owner, spender):
@@ -74,6 +76,15 @@ def payload2bytes(payload):
     return byteload
 
 
+def tx2bytes(calldata, contract_address):
+    calldata = calldata.split("x")[1]
+    contract_address = contract_address.split("x")[1]
+    calldata_length = format(len(calldata)//2, "x").zfill(64)
+    tx_bytes = contract_address + calldata_length + calldata.zfill(64)
+
+    return tx_bytes
+
+
 def execute_payload(w3, payload, wallet_address, gas_price=None):
     gas_price = w3.eth.gasPrice if not gas_price else gas_price
     # nonce = w3.eth.getTransactionCount(wallet_address)
@@ -106,7 +117,13 @@ def round_sig(x, sig=4):
     rounded = int(rounded) if float(rounded).is_integer() else rounded  # 1.0 --> 1
     return rounded
 
+
 def save_logs(row_content, save_as):
     with open(save_as, "a") as log_file:
         writer = csv.DictWriter(log_file, fieldnames=row_content.keys())
         writer.writerow(row_content)
+
+
+def remove_bytecode_data(bytecode, location, length=64):
+    return bytecode[:location] + bytecode[location+length:]
+

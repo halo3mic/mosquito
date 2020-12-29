@@ -17,9 +17,9 @@ class Uniswap:
         
         return amount_out
 
-    def swapExactTokensForETH(self, input_amount, amount_out_min, path, to_address, last_block_timestamp, gas_limit=200000, tkn_slippage=0.01, time_slippage=300):
+    def swapExactTokensForETH(self, amount_in, path, to_address, last_block_timestamp, amount_out_min=0, gas_limit=200000, tkn_slippage=0.01, time_slippage=300):
         function = "swapExactTokensForETH"
-        args = [int(input_amount), int(amount_out_min*(1-tkn_slippage)), path, to_address, last_block_timestamp+time_slippage]
+        args = [int(amount_in), int(amount_out_min*(1-tkn_slippage)), path, to_address, last_block_timestamp+time_slippage]
         calldata = self.router_contract.encodeABI(fn_name=function, args=args)
         payload = {"contractAddress": self.router_address, 
                    "calldata": calldata,
@@ -28,7 +28,7 @@ class Uniswap:
 
         return payload
 
-    def swapExactETHForTokens(self, amount_in, amount_out_min, path, to_address, last_block_timestamp, gas_limit=200000, tkn_slippage=0.01, time_slippage=300): 
+    def swapExactETHForTokens(self, amount_in, path, to_address, last_block_timestamp, amount_out_min=0, gas_limit=200000, tkn_slippage=0.01, time_slippage=300): 
         function = "swapExactETHForTokens"
         args = [int(amount_out_min*(1-tkn_slippage)), path, to_address, last_block_timestamp+time_slippage]
         calldata = self.router_contract.encodeABI(fn_name=function, args=args)

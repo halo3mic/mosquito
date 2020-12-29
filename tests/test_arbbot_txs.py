@@ -51,13 +51,13 @@ class Simulator:
 
         return results
 
-    @staticmethod
-    def results_manager(s1, s2, s3, approval_receipts, trade_receipts):
+    def results_manager(self, s1, s2, s3, approval_receipts, trade_receipts):
         if trade_receipts:
             gas_used_trades = sum([t.gasUsed for t in trade_receipts])
         else:
             gas_used_trades = 0
         results = {
+                "endTknBalance": balance_erc20(self.w3, self.wallet_address, self.tkn_address, convert=True),
                 "ethTradeProfit": round(s3['balance_eth'] - s2['balance_eth'], 4), 
                 "gasAmountFromTrades": gas_used_trades, 
                     }
@@ -74,10 +74,12 @@ class Simulator:
         return ganache_session
 
     def snapshot(self):
-        state = {"block_timestamp": self.w3.eth.getBlock("latest").timestamp,
+        state = {
+                # "block_timestamp": self.w3.eth.getBlock("latest").timestamp,
                 "block_number": self.w3.eth.blockNumber,
                 "balance_eth": self.w3.eth.getBalance(self.wallet_address)/10**18,
-                "balance_tkn": balance_erc20(self.w3, self.wallet_address, self.tkn_address)}
+                "balance_tkn": balance_erc20(self.w3, self.wallet_address, self.tkn_address, convert=True)
+                }
         return state
 
     def execute_approvals(self):
@@ -93,19 +95,20 @@ class Simulator:
             # Trade ETH for token
             tkn_path1 = self.tkn_path[:2]
             eth_input_amount = self.input_amount
-            swap_payload1 = self.exchange_path_contracts[0].swapExactETHForTokens(eth_input_amount, 0, tkn_path1, self.wallet_address, self.block_timestamp)
+            swap_payload1 = self.exchange_path_contracts[0].swapExactETHForTokens(eth_input_amount, tkn_path1, self.wallet_address, self.block_timestamp)
             tx_hash = execute_payload(self.w3, swap_payload1, self.wallet_address, gas_price=self.gas_price)
             trade1_receipt = self.w3.eth.waitForTransactionReceipt(tx_hash)
             # Trade token for ETH
             tkn_path2 = self.tkn_path[1:]
-            tkn_input_amount = balance_erc20(self.w3, self.wallet_address, self.tkn_address) * (1-0.0001) * 10**18
-            swap_payload2 = self.exchange_path_contracts[1].swapExactTokensForETH(tkn_input_amount, 0, tkn_path2, self.wallet_address, self.block_timestamp)
+            tkn_input_amount = balance_erc20(self.w3, self.wallet_address, self.tkn_address)
+            swap_payload2 = self.exchange_path_contracts[1].swapExactTokensForETH(tkn_input_amount, tkn_path2, self.wallet_address, self.block_timestamp)
             tx_hash = execute_payload(self.w3, swap_payload2, self.wallet_address, gas_price=self.gas_price)
             trade2_receipt = self.w3.eth.waitForTransactionReceipt(tx_hash)
 
             return trade1_receipt, trade2_receipt
         except Exception as e:
             print(repr(e))
+            raise e
 
     def query(self):
         router1 = self.routers[self.exchange_path[0]]
@@ -124,7 +127,7 @@ class Simulator:
 
     def get_amount_out(self, router_address, input_amount, from_token, to_token):
         uniswapv2_proxy_address = "0x121835e15703a1a7bab32626d0927D60F90A81D7"
-        proxy_contract = self.w3.eth.contract(address=uniswapv2_proxy_address, abi=abi("uniswapv2_proxy"))
+        proxy_contract = self.w3.eth.contract(address=uniswapv2_proxy_address, abi=abi("uniswapv2_router_proxy"))
         amount_out = proxy_contract.functions.getOutputAmount(router_address, input_amount, from_token, to_token).call()
         return amount_out
 
@@ -138,9 +141,10 @@ class Simulator:
 def validate_opportunity_found(block_number, instruction_id, provider_name):
 
     def compare(opp, execution, query):
-        comp = {"gasAmountDiff": round(execution["gasAmountFromTrades"]-opp["gasAmount"], 4), 
+        comp = {
+                "gasAmountDiff": round(execution["gasAmountFromTrades"]-opp["gasAmount"], 4), 
                 "netProfitDiff": round(execution["ethTradeProfit"]-opp["netProfit"], 4), 
-                "grossProfitDiff": round(query["profit"]-opp["grossProfit"]),
+                "grossProfitDiff": round(query["profit"]-opp["grossProfit"], 4),
                 "queryProfitable": query["profitable"]
                 }
         together = {**opp, **execution, **comp}
@@ -181,8 +185,8 @@ def fetch_opp_info(block_number, instruction_id):
 
 
 if __name__ == "__main__":
-    block_number = 11534461
-    instr_name = "weth2link2weth_sushiswap2Uniswap"
+    block_number = 11539755
+    instr_name = "weth2inj2weth_sushiswap2Uniswap"
     provider_name = "alchemy"
 
     r = validate_opportunity_found(block_number, instr_name, provider_name)

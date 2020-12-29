@@ -12,8 +12,10 @@
     "uni_usdcesd": "0x88ff79eB2Bc5850F27315415da8685282C7610F9", 
     "uni_ethusdc": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
 
-    "supplier_address": "0xCFb13c3248887Ab43d1777b63E57a84e8250A033", 
-    "dispatcher_address": "0xF451b59d6db7A6601B15d6250624db7329867bae",
+    "supplier": "0xCFb13c3248887Ab43d1777b63E57a84e8250A033", 
+    "dispatcher": "0xD30Ce37a6F2424593DaBe9b712d235781815445D",
+    "calebsDispatcher": "0xc53A5828a02334CEFbCc69EfD617F01cF6cc3B98",
+    "uniswapv2_router_proxy": "0x121835e15703a1a7bab32626d0927D60F90A81D7",
 
     "weth9": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", 
     "nme": "0x404A03728Afd06fB934e4b6f0EaF67796912733A", 
