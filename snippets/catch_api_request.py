@@ -4,14 +4,13 @@ import time
 
 
 app = Flask(__name__)
-save_file_path = "./logs/api_requests.csv"
+save_file_path = "./logs/api_requests_archer_dummy.csv"
 
 
-@app.route("/submit", methods=["POST"])
+@app.route("/sumbit-opportunity", methods=["POST"])
 def hello_world():
-    data = {"timestamp": int(time.time()), 
-            "senderId": request.form.get("id"), 
-            "byteload": request.form.get("byteload")}
+    data = dict(request.args)
+    data["recvTimestamp"] = int(time.time())
     with open(save_file_path, "a") as stats_file:
         writer = csv.DictWriter(stats_file, fieldnames=data.keys())
         writer.writerow(data)

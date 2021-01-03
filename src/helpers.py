@@ -33,11 +33,16 @@ def balance_erc20(w3, holder_address, token_address, convert=False):
     return balance
 
 
-def erc20_approved(w3, tkn_address, owner, spender):
+def erc20_approved(w3, tkn_address, owner, spender, convert=False):
+    print('erc20_approved')
     tkn_contract = w3.eth.contract(address=tkn_address, abi=cf.abi("erc20_token"))
-    decimals = tkn_contract.functions.decimals().call()
     allowed = tkn_contract.functions.allowance(owner, spender).call()
-    return allowed / 10**decimals
+    if convert:
+        decimals = tkn_contract.functions.decimals().call()
+        allowed /= 10**decimals
+        print('erc20_approved decimals', decimals)
+    print('erc20_approved allowed', allowed)
+    return allowed
 
 
 def payload2bytes(payload):
@@ -95,24 +100,17 @@ def execute_payload(w3, payload, wallet_address, gas_price=None):
           "to": payload["contractAddress"],
           "data": payload["calldata"], 
           "value": payload.get("value", 0), 
-          "gasPrice": gas_price *10**9
+          "gasPrice": int(gas_price *10**9)
           }
     tx_hash = w3.eth.sendTransaction(tx).hex()
     
     return tx_hash  
 
 
-def send2archer(byteload):
-    payload = {"id": cf.bot_id, "byteload": byteload}
-    print(cf.archer_api_endpoint)
-    print(payload)
-    r = requests.post(cf.archer_api_endpoint, payload)
-    print(r)
-    return r
-
-
 def round_sig(x, sig=4):
     """Return value rounded to specified significant figure"""
+    if x==0:
+        return 0
     rounded = round(x, sig - floor(log10(abs(x))) - 1)
     rounded = int(rounded) if float(rounded).is_integer() else rounded  # 1.0 --> 1
     return rounded
@@ -126,4 +124,15 @@ def save_logs(row_content, save_as):
 
 def remove_bytecode_data(bytecode, location, length=64):
     return bytecode[:location] + bytecode[location+length:]
+
+
+def send2archer(payload):
+    # url = "https://api.archerdao.io"
+    url = "http://127.0.0.1:5000/"
+    path = "/sumbit-opportunity"
+    header = {"x-api-key": cf.archer_api_key}
+    r = requests.post(url+path, params=payload, headers=header)
+    return r
+
+
 

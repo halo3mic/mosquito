@@ -8,7 +8,7 @@ from web3 import Web3
 
 class Ganache:
 
-    def __init__(self, provider, block_number=None, port=8545, mine_interval=None, unlock=[]):
+    def __init__(self, provider, block_number=None, port=8545, mine_interval=None, unlock=[], print_logs=False):
         provider_prefix = "http://" if provider.startswith("http") else "ws://"  # wss does not work
         self.provider_suffix = ("@" + str(block_number)) if block_number else ""
         self.provider = provider
@@ -22,12 +22,13 @@ class Ganache:
         self.process = None
         self.accounts = []
         self.private_keys = []
+        self.print_logs = print_logs
 
     def start_node(self):
         process_args = ["ganache-cli", 
                         self.mine_interval, 
                         *self.unlock_args, 
-                        "--callGasLimit", "0x493E0", 
+                        "--callGasLimit", "0x2DC6C0", 
                         "-f", self.provider+self.provider_suffix, 
                         f"-p {self.port}", 
                         "-v", 
@@ -38,6 +39,8 @@ class Ganache:
 
             while 1:
                 output = process.stdout.readline().decode("utf-8").strip()
+                if output and self.print_logs:
+                    print(output)
 
                 if output.startswith("Error"):
                     error = output

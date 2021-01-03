@@ -51,6 +51,13 @@ def provider(provider_name):
 def address(address_key):
     return _INTERNAL_STORAGE["addresses"].get(address_key)
 
+def private_key(address):
+    try:
+        key = "PK_"+address
+        return _ENV_VALS[key]
+    except KeyError:
+        raise Exception(f"Private key for {address} not found")
+
 
 def web3_api_session(provider_name):
     provider_address = provider(provider_name).html_path
@@ -64,6 +71,7 @@ _fetch_abis()
 _fetch_providers()
 _fetch_addresses()
 bot_id = "MSQT1"
+archer_api_key = _ENV_VALS["ARCHER_API_TOKEN"]
 archer_api_endpoint = "http://127.0.0.1:5000/submit"
 save_logs_path = "./logs/stats.csv"
 tkn_dec = {"esd": 18, 

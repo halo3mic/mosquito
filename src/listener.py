@@ -17,11 +17,12 @@ import src.config as cf
 
 class OpportunityManager:
 
-    def __init__(self, avl_opps, provider_name, save_logs=True, print_logs=True):
+    def __init__(self, avl_opps, provider_name, save_logs=True, print_logs=True, to_archer=True):
         self.provider = cf.provider(provider_name)
         self.opps = self.get_opps(avl_opps)
         self.save_logs = save_logs
         self.print_logs = print_logs
+        self.to_archer = to_archer
 
     def get_opps(self, avl_opps):
         w3 = Web3(Web3.HTTPProvider(self.provider.html_path))
@@ -29,15 +30,30 @@ class OpportunityManager:
 
     def process_opps(self, block_number, timestamp, recv_tm, state, gas_prices):
         for opp in self.opps:
-            # opp.import_state(state.get(str(opp), {}))  # Load previus state of the opportunity
+            print(f"Websocket block: {block_number} / API block: {opp.web3.eth.blockNumber}")
+            error = None
+            archer_response = None
+            
             t0 = time.time()
             opp_response = opp(block_number, timestamp, gas_prices)
             t1 = time.time()
-            # state[str(opp)] = opp.export_state()  # Save current state 
             processing_time_opp = t1 - t0
             processing_time_all = t1 - recv_tm
 
-            stats = {"blockNumber": block_number, 
+            api_block_number = opp.web3.eth.blockNumber
+            if api_block_number != block_number:
+                print("API block state is misaligned with Websockets")
+                error = "Misaligned block state"
+                exit()
+            if opp_response['profit'] >= state.get("best_profit", 0):
+                state["best_profit"] = opp_response['profit']
+            if opp_response["profit"] > 0:
+                state["lastProfitTimestamp"] = timestamp
+            if self.to_archer and opp_response["status"]:
+                archer_response = send2archer(opp_response["payload"])
+
+            stats = {"wsBlockNumber": block_number,
+                     "apiBlockNumber": api_block_number,
                      "blockTimestamp": timestamp, 
                      "receivingTime": int(recv_tm), 
                      "oppProcessingTime": processing_time_opp, 
@@ -45,28 +61,27 @@ class OpportunityManager:
                      "opportunityFound": opp_response["status"], 
                      "providerName": self.provider.name, 
                      "opportunity": str(opp), 
-                     "bytecode": opp_response["bytecode"], 
+                     "payload": opp_response["payload"], 
                      "profit": opp_response["profit"],
-                     "rapidGasPrice": gas_prices["rapid"]/10**9
+                     "rapidGasPrice": gas_prices["rapid"]/10**9, 
+                     "archerCallResponse": archer_response, 
+                     "error": error
                      }
             if self.save_logs:
                 save_logs(stats, cf.save_logs_path)
-            if opp_response['profit'] >= state.get("best_profit", 0):
-                state["best_profit"] = opp_response['profit']
-            if opp_response["profit"] > 0:
-                state["lastProfitTimestamp"] = timestamp
+                
 
         if self.print_logs:
             stdout_str = f"  BLOCK NUMBER: {block_number}  ".center(80, "#")
             stdout_str += f"\nOPP {opp}: {bool(opp_response['status'])}"
-            stdout_str += f"\nRapid gas price: {gas_prices['rapid']/10**9:.0f} gwei"
+            stdout_str += f"\nRapid gas price: {gas_prices['rapid']:.0f} gwei"
             stdout_str += f"\nTime taken: {processing_time_all:.4f} sec"
             stdout_str += f"\nLatency: {recv_tm-timestamp:.2f} sec"
             stdout_str += f"\nProfit: {opp_response['profit']:.4f} ETH"
             stdout_str += f"\nBest profit: {state['best_profit']:.4f} ETH"
             if state.get('lastProfitTimestamp'):
                 time_diff = timestamp-state['lastProfitTimestamp']
-                stdout_str += f"\nLast profitable opp: {time.strftime('%H:%M:%S', time.localtime(time_diff))} ago"
+                stdout_str += f"\nLast profitable opp: {time.strftime('%H:%M:%S', time.gmtime(time_diff))} ago"
             stdout_str += "\n"+"_"*80
             # os.system("clear")
             print(stdout_str)
@@ -93,7 +108,7 @@ class Listener:
     def gas_price_updater(self, prices_dict):
         new_prices = fetch_gas_price()
         for k, v in new_prices.items():
-            prices_dict[k] = v
+            prices_dict[k] = v / 10**9
         return prices_dict
 
     def run_block_listener(self):
