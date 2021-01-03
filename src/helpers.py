@@ -127,11 +127,12 @@ def remove_bytecode_data(bytecode, location, length=64):
 
 
 def send2archer(payload):
-    # url = "https://api.archerdao.io"
-    url = "http://127.0.0.1:5000/"
-    path = "/sumbit-opportunity"
+    url = "https://api.archerdao.io"
+    path = "/submit-opportunity"
+    # payload["x-api-key"] = cf.archer_api_key
     header = {"x-api-key": cf.archer_api_key}
     r = requests.post(url+path, params=payload, headers=header)
+    print(r)
     return r
 
 

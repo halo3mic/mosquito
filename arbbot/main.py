@@ -44,13 +44,10 @@ class ArbBot:
             self.save_logs(f_responses, block_number, timestamp)  # Save the logs even if not profitable
             
             max_profit_opp = self.best_profit(responses)
-            if max_profit_opp["netProfit"] > 0:
-                t0 = time.time()
-                archer_payload = self.form_payload(max_profit_opp)
-                print(f"Payload creation took {time.time()-t0} sec")
-                pprint(max_profit_opp)
-                return {"profit": max_profit_opp["netProfit"], "payload": archer_payload, "gasAmount": max_profit_opp["gasAmount"], "status": 1}
-        return {"profit": 0, "payload": "", "status": 0}
+            archer_payload = self.form_payload(max_profit_opp)
+            print(f"Instr: {max_profit_opp['instrSymbol']} / Net profit: {max_profit_opp['netProfit']} / Gross profit: {max_profit_opp['grossProfit']}")
+            return {"profitAfterGas": max_profit_opp["netProfit"], "payload": archer_payload, "gasAmount": max_profit_opp["gasAmount"], "profitBeforeGas": max_profit_opp["grossProfit"], "status": 1}
+        return {"status": 0}
 
     def __str__(self):
         return "ArbBot"
@@ -103,7 +100,6 @@ class ArbBot:
             gross_profit = optimal_amount["estimated_output_amount"] - optimal_amount["optimal_input_amount"]
             gas_cost = instr.gasAmount * self.gas_price / 10**9
             net_profit = gross_profit - gas_cost
-            print(instr.symbol, gross_profit, gas_cost, net_profit)
             # TODO Repeated info (symbol-id & gasCost-net_profit-gross_profit)
             # TODO Select camel case or underscore and stick to it
             checked_instr = {"instrSymbol": instr.symbol, 
