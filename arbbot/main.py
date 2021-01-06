@@ -19,7 +19,7 @@ class ArbBot:
 
     save_logs_path = "./logs/arbbot.csv"
 
-    def __init__(self, w3, selection=None, handler_address=cf.address("msqt_dispatcher")):
+    def __init__(self, w3, selection=None, handler_address=cf.address("msqt_dispatcher"), max_input_amount=10**18):
         self.web3 = w3
         self.instr = get_instructions(select=selection)
         self.exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3)}
@@ -29,6 +29,7 @@ class ArbBot:
 
         self.last_block_timestamp = None
         self.last_block_number = None
+        self.max_input_amount = max_input_amount
 
     def __call__(self, block_number, timestamp, gas_prices):
         self.last_block_number = block_number
@@ -65,10 +66,9 @@ class ArbBot:
 
         return formatted_opps
     
-    @staticmethod
-    def best_profit(opps):
-        return max(opps, key=lambda x: x["netProfit"])
-
+    def best_profit(self, opps):
+        valid_opps = [o for o in opps if o["inputAmount"]<self.max_input_amount]
+        return max(valid_opps, key=lambda x: x["netProfit"])
 
     @staticmethod
     def calculate_optimized(reserves, fee1, fee2):
@@ -148,7 +148,8 @@ class ArbBot:
         args = opp, tkn_path, exchanges, input_eth_wei
         query_script, query_insert_loc = self.form_query_calldata(*args)
         execute_script, execute_insert_loc = self.form_execution_calldata(*args)
-        target_price = int(opp["gasCost"]*10**18 + input_eth_wei)
+        # target_price = int(opp["gasCost"]*10**18 + input_eth_wei)
+        target_price = 0  # Archer accounts for the fees
         payload = {
             "bot_id": cf.bot_id,
             "target_block": self.last_block_number+1,

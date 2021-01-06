@@ -251,6 +251,7 @@ class Simulator:
         print('balance of dispatcher:', self.w3.eth.getBalance(dispatcher))
 
     def execute_maketrade(self, from_address, script, ethValue):
+        
         def address_at(script, location):
             return script[location:location+40]
 

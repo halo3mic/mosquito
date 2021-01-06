@@ -1,0 +1,23 @@
+id,symbol,pool1,pool2,path,gasAmount,enabled,gasAmountArcher
+I0001,weth2uni2weth_uniswap2sushiswap,P0001,P0002,"T0002, T0001, T0002",181685,1,266685
+I0002,weth2usdc2weth_uniswap2sushiswap,P0003,P0004,"T0002, T0003, T0002",197407,1,282407
+I0003,weth2wbtc2weth_uniswap2sushiswap,P0005,P0006,"T0002, T0004, T0002",183209,1,268209
+I0004,weth2wbtc2weth_sushiswap2uniswap,P0006,P0005,"T0002, T0004, T0002",183216,1,268216
+I0005,weth2link2weth_uniswap2sushiswap,P0007,P0008,"T0002, T0005, T0002",178473,1,263473
+I0006,weth2link2weth_sushiswap2uniswap,P0008,P0007,"T0002, T0005, T0002",178480,1,263480
+I0007,weth2dai2weth_uniswap2sushiswap,P0009,P0010,"T0002, T0006, T0002",174114,1,259114
+I0008,weth2dai2weth_sushiswap2uniswap,P0010,P0009,"T0002, T0006, T0002",174121,1,259121
+I0009,weth2sushi2weth_uniswap2sushiswap,P0011,P0012,"T0002, T0007, T0002",179679,1,264679
+I0010,weth2sushi2weth_sushiswap2uniswap,P0012,P0011,"T0002, T0007, T0002",179662,1,264662
+I0011,weth2yfi2weth_uniswap2sushiswap,P0013,P0014,"T0002, T0008, T0002",179900,1,264900
+I0012,weth2yfi2weth_sushiswap2uniswap,P0014,P0013,"T0002, T0008, T0002",179907,1,264907
+I0013,weth2kp3r2weth_uniswap2sushiswap,P0015,P0016,"T0002, T0009, T0002",172611,1,257611
+I0014,weth2kp3r2weth_sushiswap2uniswap,P0016,P0015,"T0002, T0009, T0002",172618,1,257618
+I0015,weth2snx2weth_uniswap2sushiswap,P0017,P0018,"T0002, T0010, T0002",275851,1,357012
+I0016,weth2snx2weth_sushiswap2uniswap,P0018,P0017,"T0002, T0010, T0002",275858,1,357012
+I0017,weth2band2weth_uniswap2sushiswap,P0019,P0020,"T0002, T0011, T0002",247061,1,384077
+I0018,weth2band2weth_sushiswap2uniswap,P0020,P0019,"T0002, T0011, T0002",247092,1,384078
+I0019,weth2ampl2weth_uniswap2sushiswap,P0021,P0022,"T0002, T0012, T0002",193138,1,278583
+I0020,weth2ampl2weth_sushiswap2uniswap,P0022,P0021,"T0002, T0012, T0002",193145,1,278583
+I0021,weth2inj2weth_uniswap2sushiswap,P0023,P0024,"T0002, T0013, T0002",179965,1,264965
+I0022,weth2inj2weth_sushiswap2uniswap,P0024,P0023,"T0002, T0013, T0002",179972,1,264972

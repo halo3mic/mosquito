@@ -33,7 +33,7 @@ class Ganache:
                         f"-p {self.port}", 
                         "-v", 
                         "-e 2000"]
-        print("Starting ganache ...")
+        # print("Starting ganache ...")
         try:
             process = subprocess.Popen(process_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

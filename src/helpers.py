@@ -5,6 +5,7 @@ import codecs
 import requests
 from math import floor, log10
 import csv
+import json
 
 
 def approve_erc20(token_address, spender, amount=-1):
@@ -34,14 +35,11 @@ def balance_erc20(w3, holder_address, token_address, convert=False):
 
 
 def erc20_approved(w3, tkn_address, owner, spender, convert=False):
-    print('erc20_approved')
     tkn_contract = w3.eth.contract(address=tkn_address, abi=cf.abi("erc20_token"))
     allowed = tkn_contract.functions.allowance(owner, spender).call()
     if convert:
         decimals = tkn_contract.functions.decimals().call()
         allowed /= 10**decimals
-        print('erc20_approved decimals', decimals)
-    print('erc20_approved allowed', allowed)
     return allowed
 
 
@@ -90,7 +88,7 @@ def tx2bytes(calldata, contract_address):
     return tx_bytes
 
 
-def execute_payload(w3, payload, wallet_address, gas_price=None):
+def execute_payload(w3, payload, wallet_address, gas_price=None, wait4receipt=False):
     gas_price = w3.eth.gasPrice if not gas_price else gas_price
     # nonce = w3.eth.getTransactionCount(wallet_address)
     # Add option to sign the tx
@@ -99,12 +97,15 @@ def execute_payload(w3, payload, wallet_address, gas_price=None):
           "from": wallet_address,
           "to": payload["contractAddress"],
           "data": payload["calldata"], 
-          "value": payload.get("value", 0), 
-          "gasPrice": int(gas_price *10**9)
+          "value": payload.get("value", 0)
           }
+    if gas_price:
+        tx["gasPrice"] = int(gas_price *10**9)
     tx_hash = w3.eth.sendTransaction(tx).hex()
-    
-    return tx_hash  
+    if wait4receipt:
+        return w3.eth.waitForTransactionReceipt(tx_hash)
+
+    return tx_hash
 
 
 def round_sig(x, sig=4):
@@ -128,12 +129,25 @@ def remove_bytecode_data(bytecode, location, length=64):
 
 def send2archer(payload):
     url = "https://api.archerdao.io"
+    version_num = "/v1"
     path = "/submit-opportunity"
-    # payload["x-api-key"] = cf.archer_api_key
-    header = {"x-api-key": cf.archer_api_key}
-    r = requests.post(url+path, params=payload, headers=header)
-    print(r)
-    return r
+    full_path = url + version_num + path
+    headers = {"x-api-key": cf.archer_api_key}
+    # payload["query_insert_locations"] = [{'location': str(l), 'param_sub_type': 'input'} for l in payload["query_insert_locations"]]
+    # payload["trade_insert_locations"] = [{'location': str(l), 'param_sub_type': 'input'} for l in payload["trade_insert_locations"]]
+    payload["query_insert_locations"] = [str(v) for v in payload["query_insert_locations"]]
+    payload["trade_insert_locations"] = [str(v) for v in payload["trade_insert_locations"]]
+    payload["target_block"] = str(payload["target_block"])
+    payload["estimated_profit_before_gas"] = str(payload["estimated_profit_before_gas"])
+    payload["gas_estimate"] = str(payload["gas_estimate"])
+    payload["query_breakeven"] = str(payload["query_breakeven"])
+    payload["input_amount"] = str(payload["input_amount"])
+    r = requests.post(full_path, data=json.dumps(payload), headers=headers)
+
+    try:
+        return r.json()
+    except:
+        return r
 
 
 

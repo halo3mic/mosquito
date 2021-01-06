@@ -70,7 +70,8 @@ _ENV_VALS = dotenv_values("./config/.env")
 _fetch_abis()
 _fetch_providers()
 _fetch_addresses()
-bot_id = "MSQT1"
+# bot_id = "MSQT1"
+bot_id = "2"
 archer_api_key = _ENV_VALS["ARCHER_API_TOKEN"]
 archer_api_endpoint = "http://127.0.0.1:5000/submit"
 save_logs_path = "./logs/stats.csv"

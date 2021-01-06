@@ -39,6 +39,8 @@ class OpportunityManager:
             writer = csv.DictWriter(stats_file, fieldnames=data.keys())
             writer.writerow(data)
 
+        return response
+
     def process_opps(self, block_number, timestamp, recv_tm, state, gas_prices):
         for opp in self.opps:
             print(f"Websocket block: {block_number} / API block: {opp.web3.eth.blockNumber}")
@@ -51,20 +53,23 @@ class OpportunityManager:
             processing_time_opp = t1 - t0
             processing_time_all = t1 - recv_tm
             if opp_response["status"] == 0:
+                print("Not profitable")
                 continue
             api_block_number = opp.web3.eth.blockNumber
             if api_block_number != block_number:
                 print("API block state is misaligned with Websockets")
                 error = "Misaligned block state"
+                print("@"*50)
                 exit()
-            if opp_response['profitBeforeGas'] >= state.get("best_profit", 0):
-                state["best_profit"] = opp_response['profitBeforeGas']
-            if opp_response["profitBeforeGas"] > 0:
-                state["lastProfitTimestamp"] = timestamp
             if self.to_archer and opp_response["status"]:
                 print("Sending to archer ...")
                 archer_response = self.send_to_archer(opp_response["payload"])
-                print("Opportunity sent to archer!")
+                print(archer_response)
+                if archer_response.get("status") == "success" and archer_response["most_profitable"]:
+                    state["lastProfitTimestamp"] = timestamp
+                    if opp_response['profitBeforeGas'] >= state.get("best_profit", 0):
+                        state["best_profit"] = opp_response['profitBeforeGas']
+
 
             stats = {"wsBlockNumber": block_number,
                      "apiBlockNumber": api_block_number,
@@ -95,10 +100,10 @@ class OpportunityManager:
                 stdout_str += f"\nLatency: {recv_tm-timestamp:.2f} sec"
                 stdout_str += f"\nProfit after gas: {opp_response['profitAfterGas']:.4f} ETH"
                 stdout_str += f"\nProfit before gas: {opp_response['profitBeforeGas']:.4f} ETH"
-                stdout_str += f"\nBest profit before gas: {state['best_profit']:.4f} ETH"
                 if state.get('lastProfitTimestamp'):
+                    stdout_str += f"\nBest profit before gas through archer: {state['best_profit']:.4f} ETH"
                     time_diff = timestamp-state['lastProfitTimestamp']
-                    stdout_str += f"\nLast profitable opp: {time.strftime('%H:%M:%S', time.gmtime(time_diff))} ago"
+                    stdout_str += f"\nLast success with archer: {time.strftime('%Hh%Mm%Ss', time.gmtime(time_diff))} ago"
                 stdout_str += "\n"+"_"*80
                 # os.system("clear")
                 print(stdout_str)
