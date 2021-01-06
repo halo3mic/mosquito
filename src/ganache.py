@@ -87,7 +87,6 @@ class Ganache:
         if self.process:
             self.process.kill()
 
-
 if __name__ == "__main__":
     provider_obj = cf.provider("infura")
     ganache_process = Ganache(provider_obj.html_path)

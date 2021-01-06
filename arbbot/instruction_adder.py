@@ -59,7 +59,7 @@ class QueryManager:
         # Gas for the 1st part of the tx
         args1 = 10**18, (base_tkn, mid_tkn), sender, int(time.time()) 
         # gas_amount1 = self.swapExactETHForTokens_gas(exchange1, *args1)
-        execute1_payload = exchange1.swapExactETHForTokens(*args1)
+        execute1_payload = exchange1.swapExactETHForTokens(*args1, gas_limit=1000000)
         tx1_receipt = hp.execute_payload(gc_w3, 
                                          execute1_payload, 
                                          sender, 
@@ -70,7 +70,7 @@ class QueryManager:
         mid_tkn_bal = hp.balance_erc20(gc_w3, sender, mid_tkn)
         # Gas for 2nd part of the tx
         args2 = mid_tkn_bal, (mid_tkn, base_tkn), sender, int(time.time())  
-        execute2_payload = exchange2.swapExactTokensForETH(*args2)
+        execute2_payload = exchange2.swapExactTokensForETH(*args2, gas_limit=1000000)
         tx2_receipt = hp.execute_payload(gc_w3, 
                                          execute2_payload, 
                                          sender, 
@@ -129,7 +129,8 @@ class StorageManager:
         # Check if row already exists by symbol or id
         by_symbol = self.get_by_symbol(data["symbol"])
         if by_symbol:
-            raise Exception("Already added!")
+            print("Already added")
+            return
         # Generate id for the token
         data["id"] = self._generate_new_id()
 
@@ -179,7 +180,7 @@ class TokenManager(StorageManager):
         # if info:
         #     return False
         info = self.query_mg.query_token(address)
-        info["approved"] = None
+        info["approved"] = "None"
         self._save(info)
         return True
 
@@ -293,7 +294,8 @@ def add_from_table(table_path=None):
                 # Change added to True
                 request_df.at[index, "added"] = True
             except Exception as e:
-                print(repr(e))
+                # print(repr(e))
+                raise e
             finally:
                 # Save the state of the dataframe
                 request_df.to_csv(table_path, index=False)
