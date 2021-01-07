@@ -17,17 +17,15 @@ import src.config as cf
 
 class OpportunityManager:
 
-    def __init__(self, avl_opps, provider_name, save_logs=True, print_logs=True, to_archer=True):
-        self.provider = cf.provider(provider_name)
+    def __init__(self, w3, avl_opps, save_logs=True, print_logs=True, to_archer=True):
+        self.w3 = w3
         self.opps = self.get_opps(avl_opps)
         self.save_logs = save_logs
         self.print_logs = print_logs
         self.to_archer = to_archer
 
     def get_opps(self, avl_opps):
-        w3 = Web3(Web3.HTTPProvider(self.provider.html_path))
-        # w3 = Web3(Web3.WebsocketProvider(self.provider.ws_path))
-        return [plan(w3) for plan in avl_opps]
+        return [plan(self.w3) for plan in avl_opps]
 
     @staticmethod
     def send_to_archer(payload):
@@ -43,6 +41,7 @@ class OpportunityManager:
         return response
 
     def process_opps(self, block_number, timestamp, recv_tm, state, gas_prices):
+        print("Processing opps")
         for opp in self.opps:
             print(f"Websocket block: {block_number} / API block: {opp.web3.eth.blockNumber}")
             error = None
@@ -79,7 +78,6 @@ class OpportunityManager:
                      "oppProcessingTime": processing_time_opp, 
                      "wholeProcessingTime": processing_time_all,
                      "opportunityFound": opp_response["status"], 
-                     "providerName": self.provider.name, 
                      "opportunity": str(opp), 
                      "payload": opp_response["payload"], 
                      "profitAfterGas": opp_response["profitAfterGas"],
@@ -114,9 +112,10 @@ class OpportunityManager:
 
 class Listener:
 
-    def __init__(self, provider_name, opp_manager):
+    def __init__(self, w3, opp_manager):
         self.provider = cf.provider(provider_name)
         self.opportunity_manager = opp_manager
+        self.w3 = w3
 
     def header_handler(self, header):
         msg = json.loads(header)["params"]["result"]
@@ -124,9 +123,17 @@ class Listener:
         timestamp = int(msg["timestamp"].lstrip("0x"), 16)
         return block, timestamp
 
-    def action(self, raw_header, recv_tm, storage, gas_prices):
-        block_number, timestamp = self.header_handler(raw_header)
+    def action(self, w3, recv_tm, storage, gas_prices):
+        provider_name = "chainStackUsa"
+        w3 = cf.web3_ws_session(provider_name)
+        print("action")
+        block_number = w3.eth.blockNumber
+        print(block_number)
+        timestamp = w3.eth.getBlock("latest").timestamp
+        print(timestamp)
+        print("starting to process opps")
         self.opportunity_manager.process_opps(block_number, timestamp, recv_tm, storage, gas_prices)
+        print("finished processing opps")
 
     def gas_price_updater(self, prices_dict):
         new_prices = fetch_gas_price()
@@ -139,33 +146,32 @@ class Listener:
         storage = manager.dict({'rapid': 0, 'fast': 0, 'standard': 0, 'slow': 0, 'timestamp': 0})
         prices = manager.dict()
         prices = self.gas_price_updater(prices)
+        last_block_number = 0
 
-        async def _start_listening():
-            async with websockets.connect(self.provider.ws_path, ping_interval=None) as websocket:
-                await websocket.send(self.provider.ws_blocks_request)
-                await websocket.recv()
-                opp_event = None
-                while 1:
-                    header = await websocket.recv()
-                    recv_tm = time.time()
-                    if opp_event: 
-                        opp_event.kill()
-                    opp_event = Process(target=self.action, args=(header, recv_tm, storage, prices))
-                    gas_price_event = Process(target=self.gas_price_updater, args=(prices,))
-                    opp_event.start()
-                    gas_price_event.start()
+        opp_event = gas_price_event = None
         while 1:
-            try:
-                asyncio.get_event_loop().run_until_complete(_start_listening())
-            except ConnectionClosed:
-                continue
+            block_num = self.w3.eth.blockNumber
+            if last_block_number < block_num:
+                last_block_number = block_num
+                print(block_num)
+                recv_tm = time.time()
+                if opp_event: 
+                    opp_event.kill()
+                opp_event = Process(target=self.action, args=(w3, recv_tm, storage, prices))
+                opp_event.start()
+            if not gas_price_event:
+                gas_price_event = Process(target=self.gas_price_updater, args=(prices,))
+                gas_price_event.start()
+            time.sleep(2)
+
 
 
 if __name__=="__main__":
     avl_opps = [ArbBot]
-    ws_provider = api_provider = "chainStackBlocklytics"  
-    opp_manager = OpportunityManager(avl_opps, api_provider)
-    listener = Listener(ws_provider, opp_manager)
+    provider_name = "chainStackAsia"
+    w3 = cf.web3_ws_session(provider_name)
+    opp_manager = OpportunityManager(w3, avl_opps)
+    listener = Listener(w3, opp_manager)
     listener.run_block_listener()
 
 
