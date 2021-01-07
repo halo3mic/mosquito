@@ -108,7 +108,8 @@ class ArbBot:
                             "grossProfit": gross_profit, 
                             "netProfit": net_profit, 
                             "gasCost": gas_cost, 
-                            "gasAmount": instr.gasAmount
+                            "gasAmount": instr.gasAmount, 
+                            "archGasAmount": instr.gasAmountArcher
                             }
             checked_lst.append(checked_instr)
 
@@ -155,7 +156,7 @@ class ArbBot:
             "target_block": self.last_block_number+1,
             "trade": execute_script,
             "estimated_profit_before_gas": int(opp["grossProfit"]*10**18),
-            "gas_estimate": opp["gasAmount"],
+            "gas_estimate": opp["archGasAmount"],
             "query": query_script,
             "query_breakeven": target_price,
             "input_amount": input_eth_wei,

@@ -36,7 +36,10 @@ class QueryManager:
         # Only for ERC20 tokens!
         token_address = Web3.toChecksumAddress(token_address)
         pool_contract = self.w3.eth.contract(address=token_address, abi=cf.abi("erc20_token"))
-        symbol = pool_contract.functions.symbol().call()
+        if token_address=="0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2":  # MKR something special
+            symbol = "MKR"
+        else:
+            symbol = pool_contract.functions.symbol().call()
         decimal = pool_contract.functions.decimals().call()
         token_info = {"symbol": symbol, "decimal": decimal, "address": token_address}
         return token_info

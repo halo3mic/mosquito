@@ -12,20 +12,19 @@ def approve_archer_tkns(w3, dispatcher_address, tkns, spender, approver_address,
     approver_pk = cf.private_key(approver_address)
 
     not_approved_before = tokens_not_approved(w3, tkns, dispatcher_address, spender)
-    print(not_approved_before)
-    # fun_call = dispatcher.functions.tokenAllowAll(not_approved_before, spender)
-    # tx = fun_call.buildTransaction({"from": approver_address, 
-    #                                 "nonce": w3.eth.getTransactionCount(approver_address)})
-    # gas_amount = w3.eth.estimateGas(tx)
-    # if gas_amount*gas_price/10**18 > gas_cost_threshold:
-    #     raise Exception("Gas cost too big")
-    # sig_tx = w3.eth.account.sign_transaction(tx, private_key=approver_pk)
-    # tx_hash = w3.eth.sendRawTransaction(sig_tx.rawTransaction).hex()
-    # print(f"Pending tx at: {tx_hash}")
-    # r = w3.eth.waitForTransactionReceipt(tx_hash, timeout=600)
-    # not_approved_after = tokens_not_approved(w3, not_approved_before, dispatcher_address, spender)
-    # if r.status == 0 or not_approved_after:
-    #     raise Exception("Approval failed")
+    fun_call = dispatcher.functions.tokenAllowAll(not_approved_before, spender)
+    tx = fun_call.buildTransaction({"from": approver_address, 
+                                    "nonce": w3.eth.getTransactionCount(approver_address)})
+    gas_amount = w3.eth.estimateGas(tx)
+    if gas_amount*gas_price/10**18 > gas_cost_threshold:
+        raise Exception("Gas cost too big")
+    sig_tx = w3.eth.account.sign_transaction(tx, private_key=approver_pk)
+    tx_hash = w3.eth.sendRawTransaction(sig_tx.rawTransaction).hex()
+    print(f"Pending tx at: {tx_hash}")
+    r = w3.eth.waitForTransactionReceipt(tx_hash, timeout=600)
+    not_approved_after = tokens_not_approved(w3, not_approved_before, dispatcher_address, spender)
+    if r.status == 0 or not_approved_after:
+        raise Exception("Approval failed")
         
 
 def tokens_not_approved(w3, tkns, dispatcher_address, spender_address):

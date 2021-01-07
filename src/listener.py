@@ -26,6 +26,7 @@ class OpportunityManager:
 
     def get_opps(self, avl_opps):
         w3 = Web3(Web3.HTTPProvider(self.provider.html_path))
+        # w3 = Web3(Web3.WebsocketProvider(self.provider.ws_path))
         return [plan(w3) for plan in avl_opps]
 
     @staticmethod
@@ -143,12 +144,12 @@ class Listener:
             async with websockets.connect(self.provider.ws_path, ping_interval=None) as websocket:
                 await websocket.send(self.provider.ws_blocks_request)
                 await websocket.recv()
-                gas_price_event = None
+                opp_event = None
                 while 1:
                     header = await websocket.recv()
                     recv_tm = time.time()
-                    if gas_price_event: 
-                        gas_price_event.kill()
+                    if opp_event: 
+                        opp_event.kill()
                     opp_event = Process(target=self.action, args=(header, recv_tm, storage, prices))
                     gas_price_event = Process(target=self.gas_price_updater, args=(prices,))
                     opp_event.start()
