@@ -18,7 +18,7 @@ class QueryManager:
         self.provider_name = provider_name
 
     def query_unisus_pool(self, pool_address):
-        exchange_symbol_dict = {"UNI-V2": "uniswap", "SLP": "sushiswap"}
+        exchange_symbol_dict = {"UNI-V2": "uniswap", "SLP": "sushiswap", "CRO-SWAP": "crypto"}
         fee = 0.003
 
         pool_address = Web3.toChecksumAddress(pool_address)
@@ -48,7 +48,7 @@ class QueryManager:
         # Start ganache
         ganache_session = self.start_ganache(self.provider_name)
         gc_w3 = Web3(Web3.HTTPProvider(ganache_session.node_path))
-        avl_exchanges = {"uniswap": ex.Uniswap(gc_w3), "sushiswap": ex.SushiSwap(gc_w3)}
+        avl_exchanges = {"uniswap": ex.Uniswap(gc_w3), "sushiswap": ex.SushiSwap(gc_w3), "crypto": ex.Crypto(gc_w3)}
         pool1, pool2 = pool_path
         exchange1 = avl_exchanges[pool1["exchange"]]
         exchange2 = avl_exchanges[pool2["exchange"]]

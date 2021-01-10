@@ -353,8 +353,8 @@ def fetch_opp_info(block_number, instruction_id):
 
 
 if __name__ == "__main__":
-    block_number = 11581169
-    instr_name = "weth2kp3rweth_sushiswap2Uniswap"
+    block_number = 11628133
+    instr_name = "weth2arch2weth_uniswap2sushiswap"
     provider_name = "alchemy"
     
 

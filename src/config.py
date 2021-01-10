@@ -63,6 +63,10 @@ def web3_api_session(provider_name):
     provider_address = provider(provider_name).html_path
     return Web3(Web3.HTTPProvider(provider_address))
 
+def web3_ws_session(provider_name):
+    provider_address = provider(provider_name).ws_path
+    return Web3(Web3.WebsocketProvider(provider_address))
+
 
 # Load variables
 _INTERNAL_STORAGE = {}

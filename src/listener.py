@@ -44,7 +44,6 @@ class OpportunityManager:
 
     def process_opps(self, block_number, timestamp, recv_tm, state, gas_prices):
         for opp in self.opps:
-            print(f"Websocket block: {block_number} / API block: {opp.web3.eth.blockNumber}")
             error = None
             archer_response = None
 
@@ -52,6 +51,7 @@ class OpportunityManager:
             opp_response = opp(block_number, timestamp, gas_prices)
             t1 = time.time()
             processing_time_opp = t1 - t0
+            print(f"Processing time for opp: {processing_time_opp} sec")
             processing_time_all = t1 - recv_tm
             if opp_response["status"] == 0:
                 print("Not profitable")
@@ -63,9 +63,11 @@ class OpportunityManager:
                 print("@"*50)
                 exit()
             if self.to_archer and opp_response["status"]:
+                t0 = time.time()
                 print("Sending to archer ...")
                 archer_response = self.send_to_archer(opp_response["payload"])
                 print(archer_response)
+                print(f"Sending and printing to archer took: {time.time()-t0}")
                 if archer_response.get("status") == "success" and archer_response["most_profitable"]:
                     state["lastProfitTimestamp"] = timestamp
                     if opp_response['profitBeforeGas'] >= state.get("best_profit", 0):

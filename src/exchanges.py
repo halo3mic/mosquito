@@ -54,3 +54,13 @@ class SushiSwap(Uniswap):
         self.web3 = web3
         self.router_address = cf.address("sushiswap_router")
         self.router_contract = web3.eth.contract(address=self.router_address, abi=cf.abi("uniswapv2_router"))
+
+
+class Crypto(Uniswap):
+
+    fee = 0.003
+
+    def __init__(self, web3):
+        self.web3 = web3
+        self.router_address = cf.address("crypto_router")
+        self.router_contract = web3.eth.contract(address=self.router_address, abi=cf.abi("uniswapv2_router"))

@@ -8,6 +8,7 @@
 
     "uniswapv2_router": "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", 
     "sushiswap_router": "0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F",
+    "crypto_router": "0xCeB90E4C17d626BE0fACd78b79c9c87d7ca181b3",
     "uni_ethnme": "0xddbE1dFC668233bb882014838DAE50deF5Ea967c", 
     "uni_usdcesd": "0x88ff79eB2Bc5850F27315415da8685282C7610F9", 
     "uni_ethusdc": "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",

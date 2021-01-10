@@ -12,10 +12,14 @@ def approve_archer_tkns(w3, dispatcher_address, tkns, spender, approver_address,
     approver_pk = cf.private_key(approver_address)
 
     not_approved_before = tokens_not_approved(w3, tkns, dispatcher_address, spender)
+    if not not_approved_before:
+        return
     fun_call = dispatcher.functions.tokenAllowAll(not_approved_before, spender)
     tx = fun_call.buildTransaction({"from": approver_address, 
                                     "nonce": w3.eth.getTransactionCount(approver_address)})
     gas_amount = w3.eth.estimateGas(tx)
+    # print(not_approved_before)
+    print("Tx fee estimate: ", gas_amount*gas_price/10**18, " eth")
     if gas_amount*gas_price/10**18 > gas_cost_threshold:
         raise Exception("Gas cost too big")
     sig_tx = w3.eth.account.sign_transaction(tx, private_key=approver_pk)
@@ -47,17 +51,19 @@ def tuple2str(tpl):
     return ", ".join(tpl).strip("()")
 
 
-def approve_tkns(provider="infura"):
+def approve_tkns(provider="chainStackAsia"):
     w3 = cf.web3_api_session(provider)
     approver_address = cf.address("msqt_worker")
     dispatcher_address = cf.address("msqt_dispatcher")
     tkns_storage_path = "./config/tokens_test.csv"
     tkn_df = pd.read_csv(tkns_storage_path)
-    spenders = [cf.address("uniswapv2_router"), cf.address("sushiswap_router")]
+    spenders = [cf.address("uniswapv2_router"), 
+                cf.address("sushiswap_router"), 
+                cf.address("crypto_router")]
     tkn_df.approved = tkn_df.approved.apply(lambda x: str2tuple(x) if x!="None" else tuple())
     try:
         for spender in spenders:
-            not_approved = tkn_df.loc[~tkn_df["approved"].str.contains(spender, regex=False)].address.to_list()
+            not_approved = tkn_df.loc[(~tkn_df["approved"].str.contains(spender, regex=False))&tkn_df["requiredApproval"].str.contains(spender, regex=False)].address.to_list()
             not_approved_str = '\n\t'.join(not_approved).strip('()')
             print("")
             print(f"Approving\n\t{not_approved_str}\nfor spender {spender}")
@@ -69,7 +75,7 @@ def approve_tkns(provider="infura"):
         # print(repr(e))
         raise e
     finally:
-        tkn_df.approved = tkn_df.approved.apply(lambda x: tuple2str(x))
+        tkn_df.approved = tkn_df.approved.apply(lambda x: tuple2str(x) if x else "None")
         tkn_df.to_csv(tkns_storage_path, index=False)
 
 

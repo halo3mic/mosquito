@@ -2,9 +2,10 @@ from arbbot.dt_manager import get_instructions
 from arbbot import optimal_amount
 import src.config as cf
 from src.helpers import round_sig, remove_bytecode_data, tx2bytes
-from src.exchanges import Uniswap, SushiSwap
+from src.exchanges import Uniswap, SushiSwap, Crypto
 
 from concurrent.futures import ThreadPoolExecutor
+import requests
 import csv
 import websockets
 from multiprocessing import Process
@@ -22,7 +23,7 @@ class ArbBot:
     def __init__(self, w3, selection=None, handler_address=cf.address("msqt_dispatcher"), max_input_amount=10**18):
         self.web3 = w3
         self.instr = get_instructions(select=selection)
-        self.exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3)}
+        self.exchanges = {"uniswap": Uniswap(w3), "sushiswap": SushiSwap(w3), "crypto": Crypto(w3)}
         self.gas_price = None
         self.start_time = None
         self.handler_address = handler_address
@@ -35,7 +36,6 @@ class ArbBot:
         self.last_block_number = block_number
         self.last_block_timestamp = timestamp
         self.gas_price = gas_prices["rapid"]
-        print("gas price is: ", self.gas_price)
         self.start_time = time.time()
         print("...")
 
@@ -122,10 +122,17 @@ class ArbBot:
             if pool not in all_pools:
                 all_pools.append(pool)
         # Thread for each web3 call
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=len(all_pools)) as executor:
             reserves = executor.map(self.fetch_reserves, all_pools)
         reserves_dict = dict(reserves)
         return reserves_dict
+
+    @staticmethod
+    def async_fetch_reserves_from_api():
+        url = "http://localhost:3000/fetch_reserves"
+        r = requests.get(url).json()
+        formatted = {p['id']: {k: int(v, 16) for k, v in p['reserve'].items()} for p in r}
+        return formatted
 
     def fetch_reserves(self, pool):
         exchange_contract = self.exchanges[pool.exchange]
@@ -134,7 +141,8 @@ class ArbBot:
         return pool.id, reserve
 
     def run(self):
-        reserves = self.async_fetch_reserves()
+        # reserves = self.async_fetch_reserves()
+        reserves = self.async_fetch_reserves_from_api()
         opps = self.check4prof(reserves)
         return opps
 
